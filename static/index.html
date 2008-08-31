@@ -1,13 +1,21 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
     <head>
-        <title>Next Bus Proxy</title>
+        <title>Next Bus Proxy for SBS Transit</title>
     </head>
+    <style type="text/css">
+        body {font-size: smaller;}
+    </style>
 </html>
 <body>
+    <p>This is a proxy for SBS Transit's mobile iris service</p>
     <form name="input" action="/stop/" method="get">
-        Bus Stop Number: <input type="text" name="number">
-        <input type="submit" value="Fetch!">
+        <p>Specify bus stop number (5 digits):</p>
+        <p><input type="text" name="number" maxlength="5">
+        <input type="submit" value="Fetch!"></p>
     </form>
+    <p style="font-size: smaller;">
+        [<a href="mailto:dsarda+nextbus@gmail.com">Contact</a>]
+    </p>
 </body>
 </html>
