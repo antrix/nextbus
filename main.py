@@ -5,6 +5,8 @@ import os
 from google.appengine.ext import webapp
 from google.appengine.api import memcache
 from google.appengine.api import urlfetch
+from google.appengine.runtime import DeadlineExceededError
+
 from BeautifulSoup import BeautifulSoup
 
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris/'
@@ -54,17 +56,19 @@ class EndPoint(webapp.RequestHandler):
                 services, stop_description = self.get_stop_details(stop)
             except:
                 self.error(500)
+                self.response.out.write('Error processing request. Please retry.')
                 logging.error("Error getting stop details", exc_info=True)
                 return
 
             self.response.out.write('<html><head><title>Services at Stop %s' \
-                    '</title></head><body><p>Stop %s. Description %s</p>' \
+                    '</title></head><body><p>Stop %s <br/> %s</p>' \
                     '<table>' % (stop, stop, stop_description))
             for service in services:
                 try:
                     next, subsequent = self.get_timings(stop, service)
                 except:
                     self.error(500)
+                    self.response.out.write('Error processing request. Please retry.')
                     logging.error("Error getting service details", exc_info=True)
                     return
 
@@ -91,8 +95,14 @@ class EndPoint(webapp.RequestHandler):
 
         soup = BeautifulSoup(result)
 
-        # more processing to extract bus service numbers in a tuple
-        # TODO
+        stop_description = ' '.join([unicode(x) for x in soup.font.contents])
+
+        services = []
+        for link in soup.table('a'):
+            services.append(unicode(link.string))
+
+        logging.debug('for stop %s at %s services are %s' % (
+                    stop, stop_description, services))
 
         # save to memcache
         if not memcache.set(stop, (stop_description, services)):
@@ -107,24 +117,26 @@ class EndPoint(webapp.RequestHandler):
 
         next, subsequent = memcache.get('%s-%s' % (stop, service))
         if next is not None and subsequent is not None:
-            logging.info('Cache hit for service %s at stop %s' \
+            logging.debug('Cache hit for service %s at stop %s' \
                     % (service, stop))
             return (next, subsequent)
 
-        result = get_url('%s/mobresult.aspx?stop=%s&svc=%s' \
+        result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
                         % (SBS_SITE, stop, service))
 
-        soup = BeautifulSoup(result)
+        x = re.search(r'Next bus:\s+(?P<next>[\w\s]+)<br>.*?Subsequent bus:' \
+                    '\s+(?P<subsequent>[\w\s]+)</font>', html, re.DOTALL)
 
-        # more processing to extract timings
-        # TODO
+        next = x.group('next')
+        subsequent = x.group('subsequent')
 
         # save to memcache
-        if not memcache.set('%s-%s' % (stop, service), (next, subsequent)): 
+        if not memcache.set('%s-%s' % (stop, service), 
+                            (next, subsequent), time=60): 
             logging.error('Failed saving cache for stop,svc %s,%s' \
                             % (stop, service))
         else:
-            logging.error('Saved cache for stop,svc %s,%s' % (stop, service))
+            logging.debug('Saved cache for stop,svc %s,%s' % (stop, service))
 
         return (next, subsequent)
 
