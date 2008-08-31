@@ -1,6 +1,7 @@
 import wsgiref.handlers
 import logging
 import os
+import random
 import re
 
 from google.appengine.ext import webapp
@@ -89,8 +90,7 @@ class EndPoint(webapp.RequestHandler):
         except DeadlineExceededError:
             redirect_url = '/stop/?number=%s&random=%s' % (stop, random.randint(1,100))
             self.redirect(redirect_url)
-            logging.info('Request preempted while processing %s for stop %s.' \
-                    'Redirecting to %s' % service, stop, redirect_url)
+            logging.warn('Request preempted. Redirecting to %s' % redirect_url)
 
 
     def get_stop_details(self, stop):
@@ -111,7 +111,7 @@ class EndPoint(webapp.RequestHandler):
         logging.debug('for stop %s services are %s' % (stop, services))
 
         # save to memcache
-        if not memcache.set(stop, services):
+        if not memcache.set(stop, services, time=604800): # 7 days
             logging.error('Failed saving cache for stop %s' % stop)
         else:
             logging.debug('Saved stop %s to cache' % stop)
@@ -159,7 +159,7 @@ class EndPoint(webapp.RequestHandler):
             logging.error('Failed saving cache for stop,svc %s,%s' \
                             % (stop, service))
         else:
-            logging.debug('Saved cache for stop,svc %s,%s' % (stop, service))
+            logging.debug('Saved cache for stop, svc %s, %s' % (stop, service))
 
         return (next, subsequent)
 
