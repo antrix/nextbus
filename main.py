@@ -16,7 +16,7 @@ from BeautifulSoup import BeautifulSoup
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
 
 def isvaliddomain():
-    valid_list = ['nextbus.appspot.com', 
+    valid_list = ['sbsnextbus.appspot.com', 
              'localhost', 'localhost:9999', 'localhost:8080']
     if os.environ['HTTP_HOST'].lower() in valid_list:
         return True
@@ -42,7 +42,7 @@ class EndPoint(webapp.RequestHandler):
         if not isvaliddomain():
             self.error(503)
             self.response.out.write('You are not authorized to run this' +
-                    ' application on the domain %s. Please visit nextbus.appspot.com directly.'
+                    ' application on the domain %s. Please visit sbsnextbus.appspot.com directly.'
                     % os.environ['HTTP_HOST'])
             return
 
@@ -72,6 +72,8 @@ class EndPoint(webapp.RequestHandler):
             for service in services:
                 try:
                     next, subsequent = self.get_timings(stop, service)
+                except DeadlineExceededError:
+                    raise
                 except:
                     next, subsequent = ('retry', 'retry')
                     logging.error("Error getting service details", exc_info=True)
@@ -164,12 +166,12 @@ class EndPoint(webapp.RequestHandler):
 urls = [('/stop\/?', EndPoint)]
 
 def main():
-    if os.environ['HTTP_HOST'].lower() in ('nextbus.appspot.com',):
-        logging.getLogger().setLevel(logging.INFO)
-        debug = False
-    else:
-        logging.getLogger().setLevel(logging.DEBUG)
-        debug = True
+    #if os.environ['HTTP_HOST'].lower() in ('sbsnextbus.appspot.com',):
+    #    logging.getLogger().setLevel(logging.INFO)
+    #    debug = False
+    #else:
+    logging.getLogger().setLevel(logging.DEBUG)
+    debug = True
 
     application = webapp.WSGIApplication(
           urls, debug=debug)
