@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import re
+import StringIO
 
 from google.appengine.ext import webapp
 from google.appengine.api import memcache
@@ -12,13 +13,31 @@ try:
 except:
     from google.appengine.runtime.apiproxy_errors import DeadlineExceededError
 
-from google3.apphosting.runtime import DeadlineExceededError as DeadlineExceededError2
-#except:
-#    DeadlineExceededError2 = DeadlineExceededError
+try:
+    from google3.apphosting.runtime import DeadlineExceededError as DeadlineExceededError2
+except:
+    DeadlineExceededError2 = DeadlineExceededError
 
 from BeautifulSoup import BeautifulSoup
 
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
+
+PAGE_TEMPLATE = """
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>%(title)s</title>
+        <meta name="viewport" 
+            content="width=320; initial-scale=1; maximum-scale=1; user-scalable=1;"/>
+        <style type="text/css">
+            body, td, th {font-size: smaller;}
+        </style>
+    </head>
+<body>
+%(body)s
+</body>
+</html>"""
 
 def isvaliddomain():
     valid_list = ['sbsnextbus.appspot.com', 
@@ -70,60 +89,69 @@ class EndPoint(webapp.RequestHandler):
             self.redirect('/')
             return
 
+        # Fetch the bus services at this stop
         try:
-            # Fetch the bus services at this stop
-            try:
-                services = self.get_stop_details(stop)
-            except HTTPError, e:
-                if e.code == 404:
-                    self.error(404)
-                    self.response.out.write('The requested resource could not be found. Are you sure' \
-                            ' you typed the stop number correctly? If this problem persists, please ' \
-                            'contact dsarda+nextbus@gmail.com about it.')
-                else:
-                    self.error(e.code)
-                    self.response.out.write('Error processing request. Please retry. If this problem' \
-                            ' persists, please contact dsarda+nextbus@gmail.com about it.')
-                return
-            except:
+            services = self.get_stop_details(stop)
+        except (DeadlineExceededError, DeadlineExceededError2):
+            redirect_url = '/stop/?number=%s&random=%s' % (stop, random.randint(1,100))
+            self.redirect(redirect_url)
+            logging.warn('Request preempted. Redirecting to %s' % redirect_url)
+        except Exception, e:
+            if isinstance(e, HTTPError) and e.code == 404:
+                self.error(404)
+                self.response.out.write(
+                    PAGE_TEMPLATE % {
+                    'title': stop + ' not found - sbsnextbus', 
+                    'body': 'The requested stop ' + stop + ' could not be found.' \
+                        ' Are you sure you entered the stop number correctly?' \
+                        'If this problem persists, please contact' \
+                        ' dsarda+nextbus@gmail.com about it.'}
+                    )
+            else:
                 self.error(500)
-                self.response.out.write('Error processing request. Please retry. If this problem' \
-                            ' persists, please contact dsarda+nextbus@gmail.com about it.')
-                logging.error("Error getting stop details", exc_info=True)
-                return
+                self.response.out.write(
+                    PAGE_TEMPLATE % {
+                    'title': 'Error - sbsnextbus', 
+                    'body': 'Error processing request. Please ' \
+                        '<a href="">retry</a>. If this problem persists,' \
+                        ' please contact dsarda+nextbus@gmail.com about it.'}
+                    )
+                if not isinstance(e, HTTPError):
+                    logging.error("Error getting stop details", exc_info=True)
+            return
 
-            self.response.out.write('<html><head><title>Services at stop %s' \
-                    '</title><style type="text/css">body, td, th {font-size: smaller;}' \
-                    '</style><meta name="viewport" content="width=320; ' \
-                    'initial-scale=1; maximum-scale=1; user-scalable=1;"/>' \
-                    '</head><body><p>Services at stop %s</p>' \
-                    '<font><table border="0" cellpadding="2"><tr align="left"><th></th><th>Next</th>' \
-                    '<th>Subsequent</th></tr>' % (stop, stop))
+        try:
+            output = StringIO.StringIO()
+            output.write('<p>Services at stop %s</p>' \
+                    '<font><table border="0" cellpadding="2">' \
+                    '<tr align="left"><th></th><th>Next</th>' \
+                    '<th>Subsequent</th></tr>' % stop)
             for service in services:
                 try:
+                    next, subsequent = ('retry', 'retry')
                     next, subsequent = self.get_timings(stop, service)
                 except (DeadlineExceededError, DeadlineExceededError2):
                     raise
                 except:
-                    next, subsequent = ('retry', 'retry')
+                    pass
 
-                self.response.out.write('<tr><td><a href="%s/index_mobresult.aspx?' \
-                        'stop=%s&svc=%s">%s</a></td><td>%s</td><td>%s</td></tr>' \
-                        % (SBS_SITE, stop, service, service, next, subsequent))
+                output.write('<tr><td><a href="%s/index_mobresult.aspx?' \
+                    'stop=%s&svc=%s">%s</a></td><td>%s</td><td>%s</td></tr>' \
+                    % (SBS_SITE, stop, service, service, next, subsequent))
 
-            self.response.out.write('</table><br/><a href="http://%s/stop/?number=%s">' \
-                    'Refresh</a></font></body></html>' % (os.environ['HTTP_HOST'].lower(),
-                                                            stop))
+            output.write('</table><br/><a href="http://%s/stop/?number=%s">' \
+                'Refresh</a></font>' % (os.environ['HTTP_HOST'].lower(), stop))
+
+            self.response.out.write(
+                PAGE_TEMPLATE % {
+                    'title': 'Services at stop '+ stop, 
+                    'body': output.getvalue()}
+                )
             return
-        except DeadlineExceededError:
+        except (DeadlineExceededError, DeadlineExceededError2):
             redirect_url = '/stop/?number=%s&random=%s' % (stop, random.randint(1,100))
             self.redirect(redirect_url)
             logging.warn('Request preempted. Redirecting to %s' % redirect_url)
-        except DeadlineExceededError2:
-            redirect_url = '/stop/?number=%s&random=%s' % (stop, random.randint(1,100))
-            self.redirect(redirect_url)
-            logging.warn('DeadlineExceededError2 Request preempted. Redirecting to %s' % redirect_url)
-
 
     def get_stop_details(self, stop):
 
@@ -162,7 +190,6 @@ class EndPoint(webapp.RequestHandler):
         result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
                         % (SBS_SITE, stop, service))
 
-        #logging.info(result)
         # Check if we are redirected
         if re.search(r'Object moved to', result, re.DOTALL):
             soup = BeautifulSoup(result)
@@ -174,8 +201,8 @@ class EndPoint(webapp.RequestHandler):
                             % (SBS_SITE, token, stop, service))
             #logging.info(result)
 
-        x = re.search(r'Next bus:\s+(?P<next>[\w\s\(\)]+)<br>.*?Subsequent bus:' \
-                    '\s+(?P<subsequent>[\w\s\(\)]+)<br>', result, re.DOTALL)
+        x = re.search(r'Service\s+?%s<br.*?Next bus:\s+(?P<next>[\w\s\(\)]+)<br>.*?Subsequent bus:' \
+                    '\s+(?P<subsequent>[\w\s\(\)]+)<br>' % service.lstrip('0'), result, re.DOTALL)
 
         if not x:
             logging.debug('failed to fetch info for service %s at stop %s' % (
