@@ -12,6 +12,10 @@ try:
 except:
     from google.appengine.runtime.apiproxy_errors import DeadlineExceededError
 
+from google3.apphosting.runtime import DeadlineExceededError as DeadlineExceededError2
+#except:
+#    DeadlineExceededError2 = DeadlineExceededError
+
 from BeautifulSoup import BeautifulSoup
 
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
@@ -19,18 +23,29 @@ SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
 def isvaliddomain():
     valid_list = ['sbsnextbus.appspot.com', 
              'localhost', 'localhost:9999', 'localhost:8080']
-    if os.environ['HTTP_HOST'].lower() in valid_list:
-        return True
-    else:
-        return False
+    host = os.environ['HTTP_HOST'].lower()
+    for valid_host in valid_list:
+        if host.endswith(valid_host):
+            return True
+    return False
+
+class HTTPError(Exception):
+    def __init__(self, url, code, content=""):
+        self.url = url
+        self.code = code
+        self.content = content
+
+    def __str__(self):
+        return "HTTPError %s on url %s" % (self.url, self.code)
 
 def get_url(url):
     try:
         result = urlfetch.fetch(url)
         if result.status_code != 200:
-            logging.error('Error code %s while fetching url: %s. Details: %s' % (
-                result.status_code, url, result.content))
-            raise Exception("Error fetching url")
+            logging.error('Error code %s while fetching url: %s' % (result.status_code, url))
+            if result.status_code != 404:
+                logging.debug('Details for url fetch error: %s' % result.content)
+            raise HTTPError(url, result.status_code, result.content)
         else:
             return result.content
     except urlfetch.Error, e:
@@ -59,25 +74,38 @@ class EndPoint(webapp.RequestHandler):
             # Fetch the bus services at this stop
             try:
                 services = self.get_stop_details(stop)
+            except HTTPError, e:
+                if e.code == 404:
+                    self.error(404)
+                    self.response.out.write('The requested resource could not be found. Are you sure' \
+                            ' you typed the stop number correctly? If this problem persists, please ' \
+                            'contact dsarda+nextbus@gmail.com about it.')
+                else:
+                    self.error(e.code)
+                    self.response.out.write('Error processing request. Please retry. If this problem' \
+                            ' persists, please contact dsarda+nextbus@gmail.com about it.')
+                return
             except:
                 self.error(500)
-                self.response.out.write('Error processing request. Please retry.')
+                self.response.out.write('Error processing request. Please retry. If this problem' \
+                            ' persists, please contact dsarda+nextbus@gmail.com about it.')
                 logging.error("Error getting stop details", exc_info=True)
                 return
 
             self.response.out.write('<html><head><title>Services at stop %s' \
-                    '</title></head><style type="text/css">body, td, th {font-size: smaller;}' \
-                    '</style><body><p>Services at stop %s</p>' \
+                    '</title><style type="text/css">body, td, th {font-size: smaller;}' \
+                    '</style><meta name="viewport" content="width=320; ' \
+                    'initial-scale=1; maximum-scale=1; user-scalable=1;"/>' \
+                    '</head><body><p>Services at stop %s</p>' \
                     '<font><table border="0" cellpadding="2"><tr align="left"><th></th><th>Next</th>' \
                     '<th>Subsequent</th></tr>' % (stop, stop))
             for service in services:
                 try:
                     next, subsequent = self.get_timings(stop, service)
-                except DeadlineExceededError:
+                except (DeadlineExceededError, DeadlineExceededError2):
                     raise
                 except:
                     next, subsequent = ('retry', 'retry')
-                    logging.error("Error getting service details", exc_info=True)
 
                 self.response.out.write('<tr><td><a href="%s/index_mobresult.aspx?' \
                         'stop=%s&svc=%s">%s</a></td><td>%s</td><td>%s</td></tr>' \
@@ -91,6 +119,10 @@ class EndPoint(webapp.RequestHandler):
             redirect_url = '/stop/?number=%s&random=%s' % (stop, random.randint(1,100))
             self.redirect(redirect_url)
             logging.warn('Request preempted. Redirecting to %s' % redirect_url)
+        except DeadlineExceededError2:
+            redirect_url = '/stop/?number=%s&random=%s' % (stop, random.randint(1,100))
+            self.redirect(redirect_url)
+            logging.warn('DeadlineExceededError2 Request preempted. Redirecting to %s' % redirect_url)
 
 
     def get_stop_details(self, stop):
@@ -148,10 +180,10 @@ class EndPoint(webapp.RequestHandler):
         if not x:
             logging.debug('failed to fetch info for service %s at stop %s' % (
                                 service, stop))
-            return ('retry', 'retry')
-
-        next = x.group('next')
-        subsequent = x.group('subsequent')
+            next, subsequent = ('retry', 'retry')
+        else:
+            next = x.group('next')
+            subsequent = x.group('subsequent')
 
         # save to memcache
         if not memcache.set('%s-%s' % (stop, service), 
