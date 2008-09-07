@@ -61,14 +61,14 @@ def get_url(url):
     try:
         result = urlfetch.fetch(url)
         if result.status_code != 200:
-            logging.error('Error code %s while fetching url: %s' % (result.status_code, url))
+            logging.warn('Error code %s while fetching url: %s' % (result.status_code, url))
             if result.status_code != 404:
                 logging.debug('Details for url fetch error: %s' % result.content)
             raise HTTPError(url, result.status_code, result.content)
         else:
             return result.content
     except urlfetch.Error, e:
-        logging.error("Error fetching url %s" % url, exc_info=True)
+        logging.warn("Error fetching url %s" % url, exc_info=True)
         raise e
 
 class EndPoint(webapp.RequestHandler):
@@ -81,6 +81,15 @@ class EndPoint(webapp.RequestHandler):
                     % os.environ['HTTP_HOST'])
             return
 
+        if self.request.get('flushcache'):
+            result = memcache.flush_all()
+            response = PAGE_TEMPLATE % {
+                'title': 'sbsnextbus - memcache flush', 
+                'body': 'memcache flush ' + \
+                            (result and 'succeeded' or 'failed')}
+            self.response.out.write(response)
+            return
+        
         try:
             # Cast to int just to ensure we are getting a number
             stop = int(self.request.get('number'))
@@ -91,7 +100,7 @@ class EndPoint(webapp.RequestHandler):
 
         # Fetch the bus services at this stop
         try:
-            services = self.get_stop_details(stop)
+            details = self.get_stop_details(stop)
         except (DeadlineExceededError, DeadlineExceededError2):
             redirect_url = '/stop/?number=%s&random=%s' % (stop, random.randint(1,100))
             self.redirect(redirect_url)
@@ -121,11 +130,13 @@ class EndPoint(webapp.RequestHandler):
             return
 
         try:
+            description = details[0]
+            services = details[1]
             output = StringIO.StringIO()
-            output.write('<p>Services at stop %s</p>' \
+            output.write('<p>Services at stop %s.<br/> %s.</p>' \
                     '<font><table border="0" cellpadding="2">' \
                     '<tr align="left"><th></th><th>Next</th>' \
-                    '<th>Subsequent</th></tr>' % stop)
+                    '<th>Subsequent</th></tr>' % (stop, description))
             for service in services:
                 try:
                     next, subsequent = ('retry', 'retry')
@@ -144,7 +155,7 @@ class EndPoint(webapp.RequestHandler):
 
             self.response.out.write(
                 PAGE_TEMPLATE % {
-                    'title': 'Services at stop '+ stop, 
+                    'title': stop + ': ' + description, 
                     'body': output.getvalue()}
                 )
             return
@@ -164,6 +175,18 @@ class EndPoint(webapp.RequestHandler):
 
         soup = BeautifulSoup(result)
 
+        text = [c.strip() for c in soup.form.findAll(text=True) if c.strip()]
+        description = []
+        for t in text:
+            if t.startswith('Please'):
+                break
+            description.append(t)
+
+        if description:
+            description = ', '.join(description)
+
+        logging.info('stop %s description: %s' % (stop, description))
+
         services = []
         for link in soup('a'):
             services.append(unicode(link.string))
@@ -171,12 +194,13 @@ class EndPoint(webapp.RequestHandler):
         logging.debug('for stop %s services are %s' % (stop, services))
 
         # save to memcache
-        if not memcache.set(stop, services, time=604800): # 7 days
+        if not memcache.set(stop, 
+                (description, services), time=604800): # 7 days
             logging.error('Failed saving cache for stop %s' % stop)
         else:
             logging.debug('Saved stop %s to cache' % stop)
 
-        return services
+        return (description, services)
 
 
     def get_timings(self, stop, service):
