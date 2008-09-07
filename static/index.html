@@ -1,12 +1,12 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-    <head>
-        <title>Next Bus Proxy for SBS Transit</title>
-        <meta name="viewport" content="width=320; initial-scale=1; maximum-scale=1; user-scalable=1;"/>
-        <style type="text/css">
-            body {font-size: smaller;}
-        </style>
-    </head>
+<head>
+    <title>Next Bus Proxy for SBS Transit</title>
+    <meta name="viewport" content="width=320; initial-scale=1; maximum-scale=1; user-scalable=1;"/>
+    <style type="text/css">
+        body {font-size: smaller;}
+    </style>
+</head>
 <body>
     <p>This is a proxy for SBS Transit's mobile iris service</p>
     <form name="input" action="/stop/" method="get">
@@ -17,5 +17,32 @@
     <p style="font-size: smaller;">
         [<a href="mailto:dsarda+nextbus@gmail.com">Contact</a>]
     </p>
+    <script type="text/javascript">
+        function onFormSubmit() {
+            var date = new Date();
+            date.setTime(date.getTime()+(60*24*60*60*1000));
+            var expires = "; expires="+date.toGMTString();
+
+            // get form & number field.value
+            document.cookie = "initialStop="+value+expires+"; path=/";
+        }
+
+        // Non-function code to read cookie & populate form field
+
+        var nameEQ = "initialStop=";
+        var ca = document.cookie.split(';');
+        for(var i=0;i < ca.length;i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) == 0) {
+                var value = c.substring(nameEQ.length,c.length);
+                // set form number field value
+
+            }
+        }
+
+        // bind onSubmit
+
+    </script>
 </body>
 </html>
