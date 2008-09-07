@@ -7,10 +7,11 @@
         body {font-size: smaller;}
     </style>
 </head>
-<body>
+<body onLoad="init();">
     <p>This is a proxy for SBS Transit's mobile iris service</p>
-    <form name="input" action="/stop/" method="get">
-        <p>Specify bus stop number (5 digits):</p>
+    <form name="inputform" action="/stop/" method="get">
+        <p>Specify bus stop number <span id="error">(5 digits)</span>:</p>
+        <p id="error" style="display: none; color: red;"></p>
         <p><input type="text" name="number" maxlength="5">
         <input type="submit" value="Fetch!"></p>
     </form>
@@ -18,31 +19,27 @@
         [<a href="mailto:dsarda+nextbus@gmail.com">Contact</a>]
     </p>
     <script type="text/javascript">
-        function onFormSubmit() {
+    function init() {
+        var n_f = document.inputform.number;
+        document.inputform.onsubmit = function() {
+            var stop = n_f.value;
+            if (stop.length != 5) {
+                document.getElementById('error').style.color = 'red';
+                return false;
+            }
             var date = new Date();
             date.setTime(date.getTime()+(60*24*60*60*1000));
             var expires = "; expires="+date.toGMTString();
-
-            // get form & number field.value
-            document.cookie = "initialStop="+value+expires+"; path=/";
+            document.cookie = "Stop="+stop+expires+"; path=/";
+            return true;
         }
-
-        // Non-function code to read cookie & populate form field
-
-        var nameEQ = "initialStop=";
-        var ca = document.cookie.split(';');
-        for(var i=0;i < ca.length;i++) {
-            var c = ca[i];
-            while (c.charAt(0)==' ') c = c.substring(1,c.length);
-            if (c.indexOf(nameEQ) == 0) {
-                var value = c.substring(nameEQ.length,c.length);
-                // set form number field value
-
-            }
+        var c = document.cookie.split(';');
+        if (c[0].length > 0) {
+            n_f.value = c[0].split('=')[1];
         }
-
-        // bind onSubmit
-
+        n_f.focus();
+        n_f.select();
+    }
     </script>
 </body>
 </html>
