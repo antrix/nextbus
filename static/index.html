@@ -20,11 +20,14 @@
     </p>
     <script type="text/javascript">
     function init() {
+        function mark_error() {
+            document.getElementById('error').style.color = 'red';
+        }
         var n_f = document.inputform.number;
         document.inputform.onsubmit = function() {
             var stop = n_f.value;
             if (stop.length != 5) {
-                document.getElementById('error').style.color = 'red';
+                mark_error();
                 return false;
             }
             var date = new Date();
@@ -40,7 +43,7 @@
             }
         }
         if (document.location.search.indexOf('error') > 0) {
-            document.getElementById('error').style.color = 'red';
+            mark_error();
         }
         n_f.focus();
         n_f.select();
