@@ -8,7 +8,7 @@
     </style>
 </head>
 <body onLoad="init();">
-    <p>This is a proxy for SBS Transit's mobile iris service</p>
+    <p>This is a proxy for SBS Transit's mobile iris service.</p>
     <form name="inputform" action="/stop/" method="get">
         <p>Specify bus stop number <span id="error">(5 digits)</span>:</p>
         <p id="error" style="display: none; color: red;"></p>
@@ -16,7 +16,7 @@
         <input type="submit" value="Fetch!"></p>
     </form>
     <p style="font-size: smaller;">
-        [<a href="mailto:dsarda+nextbus@gmail.com">Contact</a>]
+        [<a href="http://antrix.net/journal/techtalk/sbsnextbus.html">About</a>] [<a href="mailto:dsarda+nextbus@gmail.com">Contact</a>]
     </p>
     <script type="text/javascript">
     function init() {
@@ -34,8 +34,10 @@
             return true;
         }
         var c = document.cookie.split(';');
-        if (c[0].length > 0) {
-            n_f.value = c[0].split('=')[1];
+        for (var i=0; i < c.length; i++) {
+            if (c[i].indexOf('Stop') != -1) {
+                n_f.value = c[i].split('=')[1];
+            }
         }
         n_f.focus();
         n_f.select();
