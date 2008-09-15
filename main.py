@@ -1,4 +1,5 @@
 import wsgiref.handlers
+from datetime import timedelta, tzinfo, datetime, time
 import logging
 import os
 import random
@@ -38,6 +39,32 @@ PAGE_TEMPLATE = """
 %(body)s
 </body>
 </html>"""
+
+class SG_tzinfo(tzinfo):
+    """Implements Singapore timezone"""
+
+    def __repr__(self):
+        return "Asia/Singapore"
+    
+    def utcoffset(self, dt):
+        return timedelta(hours=8)
+
+    def dst(self, dt):
+        return timedelta(0)
+
+    def tzname(self, dt):
+        return self.__repr__()
+
+def is_day_time():
+    sg_tz = SG_tzinfo()
+    min = time(23, 45, 0, 0, sg_tz)
+    max = time(6, 0, 0, 0, sg_tz)
+    now = datetime.now(sg_tz).timetz()
+
+    if (min < now) or (now < max):
+        return False
+    else:
+        return True
 
 def isvaliddomain():
     valid_list = ['sbsnextbus.appspot.com', 
@@ -95,7 +122,7 @@ class EndPoint(webapp.RequestHandler):
             stop = int(self.request.get('number'))
             stop = self.request.get('number')
         except ValueError:
-            self.redirect('/')
+            self.redirect('/?error')
             return
 
         # Fetch the bus services at this stop
@@ -204,6 +231,11 @@ class EndPoint(webapp.RequestHandler):
 
 
     def get_timings(self, stop, service):
+
+        if is_day_time() and service.endswith('N'):
+            # Don't check night owl during day
+            logging.warn('day time skip for %s' % service)
+            return ('not operating now', 'no current prediction')
 
         cached = memcache.get('%s-%s' % (stop, service))
         if cached is not None:
