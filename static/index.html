@@ -39,6 +39,9 @@
                 n_f.value = c[i].split('=')[1];
             }
         }
+        if (document.location.search.indexOf('error') > 0) {
+            document.getElementById('error').style.color = 'red';
+        }
         n_f.focus();
         n_f.select();
     }
