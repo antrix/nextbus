@@ -210,7 +210,10 @@ class EndPoint(webapp.RequestHandler):
             description.append(t)
 
         if description:
+            description.reverse()
             description = ', '.join(description)
+            from titlecase import titlecase
+            description = titlecase(description.lower())
 
         logging.info('stop %s description: %s' % (stop, description))
 
