@@ -7,6 +7,7 @@ import re
 import StringIO
 
 from google.appengine.ext import webapp
+from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import memcache
 from google.appengine.api import urlfetch
 try:
@@ -20,8 +21,11 @@ except:
     DeadlineExceededError2 = DeadlineExceededError
 
 from BeautifulSoup import BeautifulSoup
+from django.utils import simplejson as json
 
-SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
+# My imports
+from utils import *
+import nextbus
 
 PAGE_TEMPLATE = """
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
@@ -40,32 +44,6 @@ PAGE_TEMPLATE = """
 </body>
 </html>"""
 
-class SG_tzinfo(tzinfo):
-    """Implements Singapore timezone"""
-
-    def __repr__(self):
-        return "Asia/Singapore"
-    
-    def utcoffset(self, dt):
-        return timedelta(hours=8)
-
-    def dst(self, dt):
-        return timedelta(0)
-
-    def tzname(self, dt):
-        return self.__repr__()
-
-def is_day_time():
-    sg_tz = SG_tzinfo()
-    min = time(23, 45, 0, 0, sg_tz)
-    max = time(6, 0, 0, 0, sg_tz)
-    now = datetime.now(sg_tz).timetz()
-
-    if (min < now) or (now < max):
-        return False
-    else:
-        return True
-
 def isvaliddomain():
     valid_list = ['sbsnextbus.appspot.com', 
              'localhost', 'localhost:9999', 'localhost:8080']
@@ -75,30 +53,40 @@ def isvaliddomain():
             return True
     return False
 
-class HTTPError(Exception):
-    def __init__(self, url, code, content=""):
-        self.url = url
-        self.code = code
-        self.content = content
+class APIEndPoint(webapp.RequestHandler):
 
-    def __str__(self):
-        return "HTTPError %s on url %s" % (self.url, self.code)
+    def get(self, stop, service=None):
+        try:
+            stop_details = nextbus.get_stop_details(stop)
+            response = {'code': 200, 'stop': stop}
+            response['description'] = stop_details[0]
+            response['services'] = stop_details[1]
+            if service:
+                if service not in stop_details[1]:
+                    response['code'] = 404
+                    response['message'] = 'No such service (%s) for stop %s' % (service, stop)
+                else:
+                    next, subsequent = nextbus.get_timings(stop, service)
+                    response['arrivals'] = {service: {'next': next, 'subsequent': subsequent}}
+        except Exception, e:
+            if isinstance(e, HTTPError) and e.code == 404:
+                self.error(404)
+                response = {'code': 404, 'message': 'Stop %s not found.' % stop}
+            else:
+                self.error(500)
+                response = {'code': 500, 'message': 'Something bad happened. Please retry.'}
+                if not isinstance(e, HTTPError):
+                    logging.error("Error getting stop details", exc_info=True)
 
-def get_url(url):
-    try:
-        result = urlfetch.fetch(url)
-        if result.status_code != 200:
-            logging.warn('Error code %s while fetching url: %s' % (result.status_code, url))
-            if result.status_code != 404:
-                logging.debug('Details for url fetch error: %s' % result.content)
-            raise HTTPError(url, result.status_code, result.content)
+        response = json.dumps(response, indent=2)
+        json_callback = self.request.get('callback').encode('utf-8')
+        if json_callback:
+            self.response.out.write('%s(%s);' % (json_callback, response))
         else:
-            return result.content
-    except urlfetch.Error, e:
-        logging.warn("Error fetching url %s" % url, exc_info=True)
-        raise e
+            self.response.out.write(response)
+        return
 
-class EndPoint(webapp.RequestHandler):
+class WebEndPoint(webapp.RequestHandler):
 
     def get(self):
         if not isvaliddomain():
@@ -281,7 +269,9 @@ class EndPoint(webapp.RequestHandler):
 
         return (next, subsequent)
 
-urls = [('/stop\/?', EndPoint)]
+urls = [(r'/stop/?', WebEndPoint),
+        (r'/api/v1/(\d{5})/$', APIEndPoint),
+        (r'/api/v1/(\d{5})/(\w+)/$', APIEndPoint)]
 
 def main():
     #if os.environ['HTTP_HOST'].lower() in ('sbsnextbus.appspot.com',):
@@ -293,7 +283,7 @@ def main():
 
     application = webapp.WSGIApplication(
           urls, debug=debug)
-    wsgiref.handlers.CGIHandler().run(application)
+    run_wsgi_app(application)
 
 if __name__ == "__main__":
     main()
