@@ -7,7 +7,7 @@
         body {font-size: smaller;}
     </style>
 </head>
-<body onLoad="init();">
+<body>
     <p>This is a proxy for SBS Transit's mobile iris service that provides next bus arrival information at bus stops.</p>
     <form name="inputform" action="/stop/" method="get">
         <p>Specify bus stop number <span id="error">(5 digits)</span>:</p>
@@ -17,37 +17,11 @@
     </form>
     <p style="font-size: smaller;">
         [<a href="http://antrix.net/journal/techtalk/sbsnextbus.html">About</a>] [<a href="mailto:dsarda+nextbus@gmail.com">Contact</a>]
+        <br/><span id="debug"></span>
     </p>
-    <script type="text/javascript">
-    function init() {
-        function mark_error() {
-            document.getElementById('error').style.color = 'red';
-        }
-        var n_f = document.inputform.number;
-        document.inputform.onsubmit = function() {
-            var stop = n_f.value;
-            if (stop.length != 5) {
-                mark_error();
-                return false;
-            }
-            var date = new Date();
-            date.setTime(date.getTime()+(60*24*60*60*1000));
-            var expires = "; expires="+date.toGMTString();
-            document.cookie = "Stop="+stop+expires+"; path=/";
-            return true;
-        }
-        var c = document.cookie.split(';');
-        for (var i=0; i < c.length; i++) {
-            if (c[i].indexOf('Stop') != -1) {
-                n_f.value = c[i].split('=')[1];
-            }
-        }
-        if (document.location.search.indexOf('error') > 0) {
-            mark_error();
-        }
-        n_f.focus();
-        n_f.select();
-    }
+
+    <script>
+    document.write(unescape("%3Cscript src='/static/index.js' type='text/javascript'%3E%3C/script%3E"));
     </script>
     <script>
     document.write(unescape("%3Cscript src='http://www.google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
