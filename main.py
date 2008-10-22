@@ -27,23 +27,6 @@ from django.utils import simplejson as json
 from utils import *
 import nextbus
 
-PAGE_TEMPLATE = """
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-    <head>
-        <title>%(title)s</title>
-        <meta name="viewport" 
-            content="width=320; initial-scale=1; maximum-scale=1; user-scalable=1;"/>
-        <style type="text/css">
-            body, td, th {font-size: smaller;}
-        </style>
-    </head>
-<body>
-%(body)s
-</body>
-</html>"""
-
 def isvaliddomain():
     valid_list = ['sbsnextbus.appspot.com', 
              'localhost', 'localhost:9999', 'localhost:8080']
@@ -96,6 +79,7 @@ class WebEndPoint(webapp.RequestHandler):
                     % os.environ['HTTP_HOST'])
             return
 
+        #TODO: Put this in an admin controller
         if self.request.get('flushcache'):
             result = memcache.flush_all()
             response = PAGE_TEMPLATE % {
@@ -107,12 +91,24 @@ class WebEndPoint(webapp.RequestHandler):
         
         try:
             # Cast to int just to ensure we are getting a number
-            stop = int(self.request.get('number'))
-            stop = self.request.get('number')
+            int(self.request.get('number'))
         except ValueError:
             self.redirect('/?error')
             return
 
+        if self.request.get('xhr') == '1':
+            self.get_ajax()
+        else:
+            self.get_regular()
+
+    def get_ajax(self):
+        self.response.out.write(
+                AJAX_PAGE_TEMPLATE % {'stop': self.request.get('number')}
+            )
+        return
+
+    def get_regular(self):
+        stop = self.request.get('number')
         # Fetch the bus services at this stop
         try:
             details = nextbus.get_stop_details(stop)

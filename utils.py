@@ -4,6 +4,50 @@ from google.appengine.api import urlfetch
 
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
 
+PAGE_TEMPLATE = """
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>%(title)s</title>
+        <meta name="viewport" 
+            content="width=320; initial-scale=1; maximum-scale=1; user-scalable=1;"/>
+        <style type="text/css">
+            body, td, th {font-size: smaller;}
+        </style>
+    </head>
+<body>
+%(body)s
+</body>
+</html>"""
+
+AJAX_PAGE_TEMPLATE = """
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>%(stop)s | nextbus</title>
+        <meta name="viewport" 
+            content="width=320; initial-scale=1; maximum-scale=1; user-scalable=1;"/>
+        <style type="text/css">
+            body, td, th {font-size: smaller;}
+        </style>
+        <script type="text/javascript" 
+            src="http://ajax.googleapis.com/ajax/libs/jquery/1.2/jquery.min.js"></script>
+        <script type="text/javascript" src="/static/nextbus.js"></script>
+    </head>
+<body>
+<p>Services at stop %(stop)s.<div id="stop-description"></div></p>
+<font>
+    <table border="0" cellpadding="2">
+        <tr align="left"><th></th><th>Next</th>
+        <th>Subsequent</th></tr>
+        </table><br/>
+    <a href="/stop/?number=%(stop)s">Refresh</a>
+</font>
+</body>
+</html>"""
+
 class HTTPError(Exception):
     def __init__(self, url, code, content=""):
         self.url = url
