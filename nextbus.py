@@ -89,7 +89,7 @@ def get_timings(stop, service):
     # save to memcache
     # TODO: Reset memcache time to 1 minute before upload!
     if not memcache.set('%s-%s' % (stop, service), 
-                        (next, subsequent), time=600): 
+                        (next, subsequent), time=60): 
         logging.error('Failed saving cache for stop,svc %s,%s' \
                         % (stop, service))
     else:
