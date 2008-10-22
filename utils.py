@@ -31,19 +31,24 @@ AJAX_PAGE_TEMPLATE = """
             content="width=320; initial-scale=1; maximum-scale=1; user-scalable=1;"/>
         <style type="text/css">
             body, td, th {font-size: smaller;}
+            table {display: none;}
+            #error {font-size: smaller; color: red; margin: 1em;}
         </style>
         <script type="text/javascript" 
             src="http://ajax.googleapis.com/ajax/libs/jquery/1.2/jquery.min.js"></script>
         <script type="text/javascript" src="/static/nextbus.js"></script>
     </head>
 <body>
-<p>Services at stop %(stop)s.<div id="stop-description"></div></p>
+<div>Services at stop <span id="stop-number">%(stop)s</span>.</div>
+<div id="stop-description"></div>
+<div id="error"></div>
 <font>
-    <table border="0" cellpadding="2">
-        <tr align="left"><th></th><th>Next</th>
-        <th>Subsequent</th></tr>
+    <table id="grid" border="0" cellpadding="2">
+        <thead><tr align="left"><th></th><th>Next</th>
+        <th>Subsequent</th></tr></thead>
+        <tbody></tbody>
         </table><br/>
-    <a href="/stop/?number=%(stop)s">Refresh</a>
+    <a id="refresh-link" href="/stop/?number=%(stop)s">Refresh</a>
 </font>
 </body>
 </html>"""

@@ -75,8 +75,8 @@ def get_timings(stop, service):
                         % (SBS_SITE, token, stop, service))
         #logging.info(result)
 
-    x = re.search(r'Service\s+?%s<br.*?Next bus:\s+(?P<next>[\w\s\(\)]+)<br>.*?Subsequent bus:' \
-                '\s+(?P<subsequent>[\w\s\(\)]+)<br>' % service.lstrip('0'), result, re.DOTALL)
+    x = re.search(r'Service\s+?%s<br.*?Next bus:\s+(?P<next>[\w\s\(\),]+)<br>.*?Subsequent bus:' \
+                '\s+(?P<subsequent>[\w\s\(\),]+)<br>' % service.lstrip('0'), result, re.DOTALL)
 
     if not x:
         logging.debug('failed to fetch info for service %s at stop %s' % (
@@ -87,8 +87,9 @@ def get_timings(stop, service):
     subsequent = x.group('subsequent')
 
     # save to memcache
+    # TODO: Reset memcache time to 1 minute before upload!
     if not memcache.set('%s-%s' % (stop, service), 
-                        (next, subsequent), time=60): 
+                        (next, subsequent), time=600): 
         logging.error('Failed saving cache for stop,svc %s,%s' \
                         % (stop, service))
     else:

@@ -53,10 +53,8 @@ class APIEndPoint(webapp.RequestHandler):
                     response['arrivals'] = {service: {'next': next, 'subsequent': subsequent}}
         except Exception, e:
             if isinstance(e, HTTPError) and e.code == 404:
-                self.error(404)
                 response = {'code': 404, 'message': 'Stop %s not found.' % stop}
             else:
-                self.error(500)
                 response = {'code': 500, 'message': 'Something bad happened. Please retry.'}
                 if not isinstance(e, HTTPError):
                     logging.error("Error getting stop details", exc_info=True)
