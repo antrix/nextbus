@@ -2,6 +2,8 @@ import logging
 from datetime import timedelta, tzinfo, datetime, time
 from google.appengine.api import urlfetch
 
+SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
+
 class HTTPError(Exception):
     def __init__(self, url, code, content=""):
         self.url = url

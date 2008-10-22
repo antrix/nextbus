@@ -3,9 +3,8 @@ import re
 from google.appengine.api import memcache
 
 from BeautifulSoup import BeautifulSoup
-from utils import get_url, is_day_time
+from utils import get_url, is_day_time, SBS_SITE
 
-SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
 
 def get_stop_details(stop):
 
