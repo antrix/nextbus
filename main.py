@@ -10,6 +10,8 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import memcache
 from google.appengine.api import urlfetch
+from google.appengine.api.urlfetch_errors import DownloadError
+
 try:
     from google.appengine.runtime import DeadlineExceededError
 except:
@@ -56,7 +58,7 @@ class APIEndPoint(webapp.RequestHandler):
                 response = {'code': 404, 'message': 'Stop %s not found.' % stop}
             else:
                 response = {'code': 500, 'message': 'Something bad happened. Please retry.'}
-                if not isinstance(e, HTTPError):
+                if not (isinstance(e, HTTPError) or isinstance(e, DownloadError)):
                     logging.error("Error getting stop details", exc_info=True)
 
         response = json.dumps(response, indent=2)
@@ -134,7 +136,7 @@ class WebEndPoint(webapp.RequestHandler):
                         '<a href="">retry</a>. If this problem persists,' \
                         ' please contact dsarda+nextbus@gmail.com about it.'}
                     )
-                if not isinstance(e, HTTPError):
+                if not (isinstance(e, HTTPError) or isinstance(e, DownloadError)):
                     logging.error("Error getting stop details", exc_info=True)
             return
 
