@@ -23,34 +23,51 @@ var NextBus = NextBus ? NextBus : {
                     $('#stop-description').text(data.description);
                     NextBus.currentStop = stop;
                     NextBus.currentServices = data.services;
-                    NextBus.updateTimings();
+                    NextBus.updateAllTimings();
                 }
             });
         },
 
-    updateTimings:
+    updateTiming:
+        function(service) {
+            var stop = NextBus.currentStop;
+            $.getJSON(NextBus.urlFor(stop, service), function(data) {
+                var n, s;
+                if (data.code != 200) {
+                    n = 'retry';
+                    s = 'retry';
+                } else {
+                    n = data.arrivals[service].next;
+                    s = data.arrivals[service].subsequent;
+                }
+                var row = $('#'+service);
+                row.find('td:first').next().html(n);
+                row.find('td:last').html(s);
+            });
+        },
+
+    updateAllTimings:
         function() {
             stop = NextBus.currentStop;
             services = NextBus.currentServices;
-            $('#grid').hide();
-            $('#grid tbody').html('');
+            //$('#grid').hide();
+            //$('#grid tbody').html('');
             $.each(services, function(i, service) {
-                var row = $('<tr id="'+service+'></tr>');
-                row.html('<td><a href="'+NextBus.sbsUrlFor(stop, service)+'">'+
-                            service + '</a></td><td class="next"></td><td class="subsequent"></td>');
-                row.appendTo('#grid tbody');
-                $.getJSON(NextBus.urlFor(stop, service), function(data) {
-                    var n, s;
-                    if (data.code != 200) {
-                        n = 'retry';
-                        s = 'retry';
-                    } else {
-                        n = data.arrivals[service].next;
-                        s = data.arrivals[service].subsequent;
-                    }
-                    row.children('.next').html(n);
-                    row.children('.subsequent').html(s);
-                });
+                var row = $('#'+service);
+                if (row.length == 0) {
+                    row = $('<tr id="'+service+'></tr>');
+                    row.appendTo('#grid tbody');
+                }
+                var a = $('<a href="'+NextBus.sbsUrlFor(stop, service)+'">'+service+'</a>')
+                            .click( function() {
+                                NextBus.updateTiming(service);
+                                return false;
+                            });
+                var td = $('<td></td>').append(a);
+                row.empty();
+                row.append(td);
+                row.append('<td></td><td></td>');
+                NextBus.updateTiming(service);
             });
             $('#grid').show();
         }
@@ -59,7 +76,7 @@ var NextBus = NextBus ? NextBus : {
 $(document).ready(function() {
     stop = $('#stop-number').text();
     $('#refresh-link').click(function() {
-            NextBus.updateTimings();
+            NextBus.updateAllTimings();
             return false;
         });
     NextBus.fetchStopInfo(stop);

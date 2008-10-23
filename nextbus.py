@@ -63,7 +63,7 @@ def get_timings(stop, service):
     result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
                     % (SBS_SITE, stop, service))
 
-    logging.info(result)
+    #logging.info(result)
     # Check if we are redirected
     if re.search(r'Object moved to', result, re.DOTALL):
         soup = BeautifulSoup(result)
@@ -79,8 +79,9 @@ def get_timings(stop, service):
                 '\s+(?P<subsequent>[\w\s\(\),]+)<br>' % service.lstrip('0'), result, re.DOTALL)
 
     if not x:
-        logging.debug('failed to fetch info for service %s at stop %s' % (
+        logging.error('parsing result page failed for service %s at stop %s' % (
                             service, stop))
+        logging.error(result)
         raise Exception('Error fetching arrival times')
 
     next = x.group('next')
