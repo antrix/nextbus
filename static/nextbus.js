@@ -31,6 +31,11 @@ var NextBus = NextBus ? NextBus : {
     updateTiming:
         function(service) {
             var stop = NextBus.currentStop;
+            var row = $('#'+service);
+            var td_n = row.find('td:first').next();
+            //var td_s = row.find('td:last');
+            var td_s = td_n.next();
+            td_n.html(''); td_s.html('');
             $.getJSON(NextBus.urlFor(stop, service), function(data) {
                 var n, s;
                 if (data.code != 200) {
@@ -40,9 +45,8 @@ var NextBus = NextBus ? NextBus : {
                     n = data.arrivals[service].next;
                     s = data.arrivals[service].subsequent;
                 }
-                var row = $('#'+service);
-                row.find('td:first').next().html(n);
-                row.find('td:last').html(s);
+                td_n.html(n);
+                td_s.html(s);
             });
         },
 
