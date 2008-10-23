@@ -3,8 +3,8 @@ import re
 from google.appengine.api import memcache
 
 from BeautifulSoup import BeautifulSoup
-from utils import get_url, is_day_time, SBS_SITE
-
+from utils import *
+from lta import lta_stops
 
 def get_stop_details(stop):
 
@@ -12,6 +12,31 @@ def get_stop_details(stop):
     if details is not None:
         logging.debug('Cache hit for stop %s' % stop)
         return details
+
+    if stop in lta_stops:
+        return get_stop_details_lta(stop)
+    else:
+        return get_stop_details_sbs(stop)
+
+def get_timings(stop, service):
+
+    if is_day_time() and service.endswith('N'):
+        # Don't check night owl during day
+        logging.warn('day time skip for %s' % service)
+        return ('not operating now', 'no current prediction')
+
+    cached = memcache.get('%s-%s' % (stop, service))
+    if cached is not None:
+        logging.debug('Cache hit for service %s at stop %s' \
+                % (service, stop))
+        return cached
+
+    if stop in lta_stops:
+        return get_stop_details_lta(stop, service)
+    else:
+        return get_timings_sbs(stop, service)
+
+def get_stop_details_sbs(stop):
 
     result = get_url('%s/index_svclist.aspx?stopcode=%s' % (SBS_SITE, stop))
 
@@ -47,18 +72,7 @@ def get_stop_details(stop):
 
     return (description, services)
 
-def get_timings(stop, service):
-
-    if is_day_time() and service.endswith('N'):
-        # Don't check night owl during day
-        logging.warn('day time skip for %s' % service)
-        return ('not operating now', 'no current prediction')
-
-    cached = memcache.get('%s-%s' % (stop, service))
-    if cached is not None:
-        logging.debug('Cache hit for service %s at stop %s' \
-                % (service, stop))
-        return cached
+def get_timings_sbs(stop, service):
 
     result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
                     % (SBS_SITE, stop, service))
@@ -97,4 +111,52 @@ def get_timings(stop, service):
         logging.debug('Saved cache for stop, svc %s, %s' % (stop, service))
 
     return (next, subsequent)
+
+def get_stop_details_lta(stop, req_service=None):
+
+    description = lta_stops[stop]
+
+    result = get_url('%s&hidBusStopValue=%s' % (LTA_SITE, stop))
+
+    soup = BeautifulSoup(result)
+
+    services = []
+    timings = {}
+
+    is_wab = lambda(val): 'handicapped' in val
+
+    for link in soup.table.findAll('a'):
+        service = link.string.strip()
+        services.append(service)
+        tds = link.parent.parent.findAll('td', width='39')
+        next = tds[0].string.strip()
+        if tds[0].parent.find('img', src=is_wab):
+            next = next + ' (WAB)'
+        subsequent = tds[1].string.strip()
+        if tds[1].parent.find('img', src=is_wab):
+            subsequent = subsequent + ' (WAB)'
+        timings[service] = (next, subsequent)
+        # save to memcache
+        # TODO: Reset memcache time to 1 minute before upload!
+        if not memcache.set('%s-%s' % (stop, service), 
+                            (next, subsequent), time=60): 
+            logging.error('LTA: Failed saving cache for stop,svc %s,%s' \
+                            % (stop, service))
+        else:
+            logging.debug('LTA: Saved cache for stop, svc %s, %s' % (stop, service))
+
+
+    logging.debug('LTA: for stop %s services are %s' % (stop, services))
+
+    # save to memcache
+    if not memcache.set(stop, 
+            (description, services), time=604800): # 7 days
+        logging.error('LTA: Failed saving cache for stop %s' % stop)
+    else:
+        logging.debug('LTA: Saved stop %s to cache' % stop)
+
+    if req_service:
+        return timings[req_service]
+    else:
+        return (description, services)
 

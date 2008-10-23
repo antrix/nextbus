@@ -3,6 +3,8 @@ from datetime import timedelta, tzinfo, datetime, time
 from google.appengine.api import urlfetch
 
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
+LTA_SITE = 'http://www.publictransport.sg/public/ptp/en/Getting-Around/' \
+            'ArrivaltimeResults.html?hidServiceNoValue='
 
 PAGE_TEMPLATE = """
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
@@ -101,3 +103,4 @@ def is_day_time():
         return False
     else:
         return True
+
