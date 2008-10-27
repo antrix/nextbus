@@ -161,8 +161,10 @@ class WebEndPoint(webapp.RequestHandler):
                     'stop=%s&svc=%s">%s</a></td><td>%s</td><td>%s</td></tr>' \
                     % (SBS_SITE, stop, service, service, next, subsequent))
 
-            output.write('</table><br/><a href="http://%s/stop/?number=%s">' \
-                'Refresh</a></font>' % (os.environ['HTTP_HOST'].lower(), stop))
+            output.write('</table><br/>')
+            output.write('<p style="font-size: smaller;">[<a id="refresh-link"' \
+                    'href="/stop/?number=%s">Refresh</a>]' \
+                    ' [<a href="/">Home</a>]</p>' % stop)
 
             self.response.out.write(
                 PAGE_TEMPLATE % {

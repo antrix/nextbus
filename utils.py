@@ -50,8 +50,10 @@ AJAX_PAGE_TEMPLATE = """
         <th>Subsequent</th></tr></thead>
         <tbody></tbody>
         </table><br/>
-    <a id="refresh-link" href="/stop/?number=%(stop)s">Refresh</a>
 </font>
+    <p style="font-size: smaller;">
+        [<a id="refresh-link" href="/stop/?number=%(stop)s">Refresh</a>] [<a href="/">Home</a>]
+    </p>
 </body>
 </html>"""
 
