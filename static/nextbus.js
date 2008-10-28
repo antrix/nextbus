@@ -14,9 +14,11 @@ var NextBus = NextBus ? NextBus : {
 
     fetchStopInfo:
         function(stop) {
+            $('#stop-description').text('fetching stop description...');
             $.getJSON(NextBus.urlFor(stop), function(data) {
                 if (data.code != 200) {
                     $('#error').text(data.message ? data.message : 'Error fetching data.');
+                    $('#stop-description').text('');
                 } else if (data.services.length < 1) {
                     $('#error').text("Hmm.. didn't find any services for this stop.");
                 } else {
@@ -32,10 +34,9 @@ var NextBus = NextBus ? NextBus : {
         function(service) {
             var stop = NextBus.currentStop;
             var row = $('#'+service);
-            var td_n = row.find('td:first').next();
-            //var td_s = row.find('td:last');
-            var td_s = td_n.next();
-            td_n.html(''); td_s.html('');
+            var td_n = row.find('.next');
+            var td_s = row.find('.subsequent'); 
+            td_n.html('...'); td_s.html('...');
             $.getJSON(NextBus.urlFor(stop, service), function(data) {
                 var n, s;
                 if (data.code != 200) {
@@ -45,6 +46,7 @@ var NextBus = NextBus ? NextBus : {
                     n = data.arrivals[service].next;
                     s = data.arrivals[service].subsequent;
                 }
+                //alert('for ' + service + ', n: '+n+', s: '+s);
                 td_n.html(n);
                 td_s.html(s);
             });
@@ -54,12 +56,11 @@ var NextBus = NextBus ? NextBus : {
         function() {
             stop = NextBus.currentStop;
             services = NextBus.currentServices;
-            //$('#grid').hide();
-            //$('#grid tbody').html('');
             $.each(services, function(i, service) {
                 var row = $('#'+service);
                 if (row.length == 0) {
-                    row = $('<tr id="'+service+'></tr>');
+                    row = $('<tr></tr>');
+                    row.attr('id', service);
                     row.appendTo('#grid tbody');
                 }
                 var a = $('<a href="'+NextBus.sbsUrlFor(stop, service)+'">'+service+'</a>')
@@ -68,9 +69,9 @@ var NextBus = NextBus ? NextBus : {
                                 return false;
                             });
                 var td = $('<td></td>').append(a);
-                row.empty();
+                row.html('');
                 row.append(td);
-                row.append('<td></td><td></td>');
+                row.append('<td class="next"></td><td class="subsequent"></td>');
                 NextBus.updateTiming(service);
             });
             $('#grid').show();
