@@ -30,11 +30,16 @@ function init() {
     if (window.XMLHttpRequest || window.ActiveXObject) {
         //n_f.innerHTML += '<input type="hidden" name="xhr" value="1" />';
         var input = document.createElement("input");
+        input.type = 'checkbox';
         input.name = 'xhr';
-        input.type = 'hidden';
         input.value = '1';
+        input.setAttribute('checked', true);
         var t_form = document.getElementById('theform');
-        t_form.appendChild(input);
+        var para = document.createElement('p');
+        var text = document.createTextNode('Use AJAX?');
+        para.appendChild(text);
+        para.appendChild(input);
+        t_form.appendChild(para);
         document.getElementById('debug').innerHTML = 'debug: browser supports ajax';
     } 
 }
