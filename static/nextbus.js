@@ -22,7 +22,7 @@ var NextBus = NextBus ? NextBus : {
                 } else if (data.services.length < 1) {
                     $('#error').text("Hmm.. didn't find any services for this stop.");
                 } else {
-                    $('#stop-description').text(data.description);
+                    $('#stop-description').text(data.description + '.');
                     NextBus.currentStop = stop;
                     NextBus.currentServices = data.services;
                     NextBus.updateAllTimings();
@@ -60,8 +60,8 @@ var NextBus = NextBus ? NextBus : {
                 var row = $('#'+service);
                 if (row.length == 0) {
                     row = $('<tr></tr>');
-                    row.attr('id', service);
                     row.appendTo('#grid tbody');
+                    row.attr('id', service);
                 }
                 var a = $('<a href="'+NextBus.sbsUrlFor(stop, service)+'">'+service+'</a>')
                             .click( function() {
