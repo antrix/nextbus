@@ -8,15 +8,16 @@
     </style>
 </head>
 <body>
-    <p>This is a proxy for SBS Transit's mobile iris service that provides next bus arrival information at bus stops.</p>
+    <p>Find out the next bus arrival information at bus stops in Singapore.</p>
     <form id="theform" name="inputform" action="/stop/" method="get">
         <p>Specify bus stop number <span id="error">(5 digits)</span>:</p>
         <p id="error" style="display: none; color: red;"></p>
         <p><input type="text" name="number" maxlength="5">
         <input type="submit" value="Fetch!"></p>
     </form>
+    <p>Note: This is just a proxy webservice for information gathered from SBS Transit's <a href="http://www.sbstransit.com.sg/mobileiris/">mobile iris</a> site &amp; LTA's <a href="http://www.publictransport.sg">PublicTransport@SG</a> site.</p>
     <p style="font-size: smaller;">
-        [<a href="http://antrix.net/journal/techtalk/sbsnextbus.html">About</a>] [<a href="mailto:dsarda+nextbus@gmail.com">Contact</a>]
+    [<a href="http://antrix.net/journal/techtalk/sbsnextbus.html">About</a>] [<a href="mailto:dsarda+nextbus@gmail.com">Contact</a>] [<a href="http://antrix.net/journal/techtalk/sbsnextbus3.html">New Features</a>]
         <br/><span id="debug"></span>
     </p>
 
