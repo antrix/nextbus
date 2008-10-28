@@ -28,7 +28,7 @@ AJAX_PAGE_TEMPLATE = """
         "http://www.w3.org/TR/html4/loose.dtd">
 <html>
     <head>
-        <title>%(stop)s | nextbus</title>
+        <title>%(stop)s | NextBus</title>
         <meta name="viewport" 
             content="width=320; initial-scale=1; maximum-scale=1; user-scalable=1;"/>
         <style type="text/css">

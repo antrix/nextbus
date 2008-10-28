@@ -131,7 +131,7 @@ class WebEndPoint(webapp.RequestHandler):
                 self.error(404)
                 self.response.out.write(
                     PAGE_TEMPLATE % {
-                    'title': stop + ' not found - sbsnextbus', 
+                    'title': stop + ' not found | NextBus', 
                     'body': 'The requested stop ' + stop + ' could not be found.' \
                         ' Are you sure you entered the stop number correctly?' \
                         'If this problem persists, please contact' \
@@ -141,7 +141,7 @@ class WebEndPoint(webapp.RequestHandler):
                 self.error(500)
                 self.response.out.write(
                     PAGE_TEMPLATE % {
-                    'title': 'Error - sbsnextbus', 
+                    'title': 'Error | sbsnextbus', 
                     'body': 'Error processing request. Please ' \
                         '<a href="">retry</a>. If this problem persists,' \
                         ' please contact dsarda+nextbus@gmail.com about it.'}
@@ -178,7 +178,7 @@ class WebEndPoint(webapp.RequestHandler):
 
             self.response.out.write(
                 PAGE_TEMPLATE % {
-                    'title': stop + ': ' + description, 
+                    'title': stop + ': ' + description + ' | NextBus', 
                     'body': output.getvalue()}
                 )
             return
