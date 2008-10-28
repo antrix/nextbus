@@ -69,6 +69,26 @@ class APIEndPoint(webapp.RequestHandler):
             self.response.out.write(response)
         return
 
+class AdminEndPoint(webapp.RequestHandler):
+
+    def get(self):
+        if not isvaliddomain():
+            self.error(503)
+            self.response.out.write('You are not authorized to run this' +
+                    ' application on the domain %s. Please visit sbsnextbus.appspot.com directly.'
+                    % os.environ['HTTP_HOST'])
+            return
+
+        if self.request.get('flushcache'):
+            result = memcache.flush_all()
+            response = PAGE_TEMPLATE % {
+                'title': 'sbsnextbus - memcache flush', 
+                'body': 'memcache flush ' + \
+                            (result and 'succeeded' or 'failed')}
+            self.response.out.write(response)
+        else:
+            self.response.out.write('what function did you want?')
+        
 class WebEndPoint(webapp.RequestHandler):
 
     def get(self):
@@ -79,16 +99,6 @@ class WebEndPoint(webapp.RequestHandler):
                     % os.environ['HTTP_HOST'])
             return
 
-        #TODO: Put this in an admin controller
-        if self.request.get('flushcache'):
-            result = memcache.flush_all()
-            response = PAGE_TEMPLATE % {
-                'title': 'sbsnextbus - memcache flush', 
-                'body': 'memcache flush ' + \
-                            (result and 'succeeded' or 'failed')}
-            self.response.out.write(response)
-            return
-        
         try:
             # Cast to int just to ensure we are getting a number
             int(self.request.get('number'))
@@ -179,6 +189,7 @@ class WebEndPoint(webapp.RequestHandler):
 
 
 urls = [(r'/stop/?', WebEndPoint),
+        (r'/admin/?', AdminEndPoint),
         (r'/api/v1/(\d{5})/$', APIEndPoint),
         (r'/api/v1/(\d{5})/(\w+)/$', APIEndPoint)]
 
