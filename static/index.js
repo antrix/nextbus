@@ -44,7 +44,7 @@ function init() {
         } else {
             xhr_f.checked = true;
         }
-        document.getElementById('debug').innerHTML = 'debug: browser supports ajax';
+        //document.getElementById('debug').innerHTML = 'debug: browser supports ajax';
     } 
 
     var n_f = document.inputform.number;
