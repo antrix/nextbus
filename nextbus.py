@@ -128,12 +128,12 @@ def get_stop_details_lta(stop, req_service=None):
     for link in soup.table.findAll('a'):
         service = link.string.strip()
         services.append(service)
-        tds = link.parent.parent.findAll('td', width='39')
-        next = tds[0].string.strip()
-        if tds[0].parent.find('img', src=is_wab):
+        tds = link.parent.findNextSiblings('td')
+        next = tds[0].findAll('td')[0].string.strip()
+        if tds[0].find('img', src=is_wab):
             next = next + ' (WAB)'
-        subsequent = tds[1].string.strip()
-        if tds[1].parent.find('img', src=is_wab):
+        subsequent = tds[1].findAll('td')[0].string.strip()
+        if tds[1].find('img', src=is_wab):
             subsequent = subsequent + ' (WAB)'
         timings[service] = (next, subsequent)
         # save to memcache
