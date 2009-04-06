@@ -30,7 +30,10 @@ from utils import *
 import nextbus
 
 def isvaliddomain():
-    valid_list = ['sbsnextbus.appspot.com', '192.168.', 'localhost']
+    if 'Development' in os.environ['SERVER_SOFTWARE']:
+        return True
+
+    valid_list = ['sbsnextbus.appspot.com']
     host = os.environ['HTTP_HOST'].lower()
     for valid_host in valid_list:
         #if host.endswith(valid_host):
