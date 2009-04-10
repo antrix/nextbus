@@ -89,8 +89,9 @@ def get_timings_sbs(stop, service):
         logging.debug('new url: %s' % new_url)
         token = re.search(r'\(\w+?\)', new_url).group()
         logging.info('new token: %s' % token)
-        result = get_url('%s/%s/index_mobresult.aspx?stop=%s&svc=%s' \
-                        % (SBS_SITE, token, stop, service))
+        result = get_url(SBS_SITE_PROXY + '%2F' + token + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
+        #result = get_url('%s/%s/index_mobresult.aspx?stop=%s&svc=%s' \
+        #                % (SBS_SITE, token, stop, service))
         #logging.info(result)
 
     x = re.search(r'Service\s+?%s<br.*?Next bus:\s+(?P<next>[\w\s\(\),]+)<br>.*?Subsequent bus:' \
