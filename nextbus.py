@@ -38,7 +38,10 @@ def get_timings(stop, service):
 
 def get_stop_details_sbs(stop):
 
-    result = get_url('%s/index_svclist.aspx?stopcode=%s' % (SBS_SITE, stop))
+    # TODO - reverse this url encoding when proxy is removed
+    #result = get_url('%s/index_svclist.aspx?stopcode=%s' % (SBS_SITE, stop))
+    #result = get_url('%s%2Findex_svclist.aspx%3Fstopcode%3D%s' % (SBS_SITE_PROXY, stop))
+    result = get_url(SBS_SITE_PROXY + '%2Findex_svclist.aspx%3Fstopcode%3D' + stop)
 
     soup = BeautifulSoup(result)
 
@@ -74,8 +77,9 @@ def get_stop_details_sbs(stop):
 
 def get_timings_sbs(stop, service):
 
-    result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
-                    % (SBS_SITE, stop, service))
+    #result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
+    #                % (SBS_SITE, stop, service))
+    result = get_url(SBS_SITE_PROXY + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
 
     #logging.info(result)
     # Check if we are redirected

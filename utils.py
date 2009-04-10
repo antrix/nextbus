@@ -3,6 +3,7 @@ from datetime import timedelta, tzinfo, datetime, time
 from google.appengine.api import urlfetch
 
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
+SBS_SITE_PROXY = 'http://75.101.162.82/proxy.php?url=mobileiris'
 LTA_SITE = 'http://www.publictransport.sg/public/ptp/en/Getting-Around/' \
             'ArrivaltimeResults.html?hidServiceNoValue='
 
@@ -66,9 +67,20 @@ class HTTPError(Exception):
     def __str__(self):
         return "HTTPError %s on url %s" % (self.url, self.code)
 
+def _urlfetch2(url):
+    maximum = 2
+    for count in range(maximum):
+        try:
+            return urlfetch.fetch(url)
+        except:
+            if count == (maximum-1):
+                raise
+
 def get_url(url):
     try:
-        result = urlfetch.fetch(url)
+        logging.debug("Fetching URL: %s", url)
+        result = _urlfetch2(url) # urlfetch.fetch(url)
+        logging.debug("Fetched URL: %s", url)
         if result.status_code != 200:
             logging.warn('Error code %s while fetching url: %s' % (result.status_code, url))
             if result.status_code != 404:
