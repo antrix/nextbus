@@ -38,10 +38,10 @@ def get_timings(stop, service):
 
 def get_stop_details_sbs(stop):
 
-    # TODO - reverse this url encoding when proxy is removed
-    #result = get_url('%s/index_svclist.aspx?stopcode=%s' % (SBS_SITE, stop))
-    #result = get_url('%s%2Findex_svclist.aspx%3Fstopcode%3D%s' % (SBS_SITE_PROXY, stop))
-    result = get_url(SBS_SITE_PROXY + '%2Findex_svclist.aspx%3Fstopcode%3D' + stop)
+    if USE_SBS_PROXY:
+        result = get_url(SBS_SITE_PROXY + '%2Findex_svclist.aspx%3Fstopcode%3D' + stop)
+    else:
+        result = get_url('%s/index_svclist.aspx?stopcode=%s' % (SBS_SITE, stop))
 
     soup = BeautifulSoup(result)
 
@@ -77,9 +77,11 @@ def get_stop_details_sbs(stop):
 
 def get_timings_sbs(stop, service):
 
-    #result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
-    #                % (SBS_SITE, stop, service))
-    result = get_url(SBS_SITE_PROXY + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
+    if USE_SBS_PROXY:
+        result = get_url(SBS_SITE_PROXY + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
+    else:
+        result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
+                        % (SBS_SITE, stop, service))
 
     #logging.info(result)
     # Check if we are redirected
@@ -89,9 +91,11 @@ def get_timings_sbs(stop, service):
         logging.debug('new url: %s' % new_url)
         token = re.search(r'\(\w+?\)', new_url).group()
         logging.info('new token: %s' % token)
-        result = get_url(SBS_SITE_PROXY + '%2F' + token + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
-        #result = get_url('%s/%s/index_mobresult.aspx?stop=%s&svc=%s' \
-        #                % (SBS_SITE, token, stop, service))
+        if USE_SBS_PROXY:
+            result = get_url(SBS_SITE_PROXY + '%2F' + token + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
+        else:
+            result = get_url('%s/%s/index_mobresult.aspx?stop=%s&svc=%s' \
+                            % (SBS_SITE, token, stop, service))
         #logging.info(result)
 
     x = re.search(r'Service\s+?%s<br.*?Next bus:\s+(?P<next>[\w\s\(\),]+)<br>.*?Subsequent bus:' \

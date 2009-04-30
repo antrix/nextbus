@@ -4,9 +4,11 @@ from google.appengine.api import urlfetch
 
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
 #SBS_SITE_PROXY = 'http://75.101.162.82/proxy.php?url=mobileiris'
-SBS_SITE_PROXY = 'http://antrix.net/nextbus/proxy.php?url=mobileiris'
+#SBS_SITE_PROXY = 'http://antrix.net/nextbus/proxy.php?url=mobileiris'
+SBS_SITE_PROXY = 'http://torbox.theaveragegeek.com/nextbus/proxy.php?url=mobileiris'
 LTA_SITE = 'http://www.publictransport.sg/public/ptp/en/Getting-Around/' \
             'ArrivaltimeResults.html?hidServiceNoValue='
+USE_SBS_PROXY = False
 
 PAGE_TEMPLATE = """
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
@@ -69,11 +71,11 @@ class HTTPError(Exception):
         return "HTTPError %s on url %s" % (self.url, self.code)
 
 def _urlfetch2(url):
-    maximum = 2
+    maximum = 3
     for count in range(maximum):
         try:
-            return urlfetch.fetch(url)
-        except:
+            return urlfetch.fetch(url, headers={'User-Agent': 'NextBus'})
+        except urlfetch.DownloadError:
             if count == (maximum-1):
                 raise
 
@@ -88,6 +90,7 @@ def get_url(url):
                 logging.debug('Details for url fetch error: %s' % result.content)
             raise HTTPError(url, result.status_code, result.content)
         else:
+            logging.debug("URL contents: %s", result.content)
             return result.content
     except urlfetch.Error, e:
         logging.warn("Error fetching url %s" % url, exc_info=True)
