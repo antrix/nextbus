@@ -1,6 +1,7 @@
 import logging
 import re
 from google.appengine.api import memcache
+from django.utils import simplejson as json
 
 from BeautifulSoup import BeautifulSoup
 from utils import *
@@ -11,10 +12,6 @@ def get_stop_details(stop):
     details = memcache.get(stop)
     if details is not None:
         logging.debug('Cache hit for stop %s' % stop)
-        # TODO - remove this! Put it here to not flush cache
-        # till I can fix the get_stop_details_sbs() method
-        if not memcache.set(stop, details, time=0): # 7 days
-            logging.error('Failed re-saving cache for stop %s' % stop)
         return details
 
     if stop in lta_stops:
@@ -42,31 +39,18 @@ def get_timings(stop, service):
 
 def get_stop_details_sbs(stop):
 
-    if USE_SBS_PROXY:
-        result = get_url(SBS_SITE_PROXY + '%2Findex_svclist.aspx%3Fstopcode%3D' + stop)
-    else:
-        result = get_url('%s/index_svclist.aspx?stopcode=%s' % (SBS_SITE, stop))
+    all_stops = json.load(open('sgbuses.json'))
 
-    soup = BeautifulSoup(result)
+    this_stop = all_stops[stop]
 
-    text = [c.strip() for c in soup.form.findAll(text=True) if c.strip()]
-    description = []
-    for t in text:
-        if t.startswith('Please'):
-            break
-        description.append(t)
+    description = this_stop['description']
 
-    if description:
-        description.reverse()
-        description = ', '.join(description)
-        from titlecase import titlecase
-        description = titlecase(description.lower())
-
-    logging.info('stop %s description: %s' % (stop, description))
+    logging.debug('stop %s description: %s' % (stop, description))
 
     services = []
-    for link in soup('a'):
-        services.append(unicode(link.string))
+    for service in this_stop['services']:
+        if service[1] == "SBS":
+            services.append(service[0])
 
     logging.debug('for stop %s services are %s' % (stop, services))
 

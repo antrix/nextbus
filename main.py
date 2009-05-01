@@ -57,7 +57,7 @@ class APIEndPoint(webapp.RequestHandler):
                     next, subsequent = nextbus.get_timings(stop, service)
                     response['arrivals'] = {service: {'next': next, 'subsequent': subsequent}}
         except Exception, e:
-            if isinstance(e, HTTPError) and e.code == 404:
+            if (isinstance(e, HTTPError) and e.code == 404) or isinstance(e, KeyError):
                 response = {'code': 404, 'message': 'Stop %s not found.' % stop}
             else:
                 response = {'code': 500, 'message': 'Something bad happened. Please retry.'}
@@ -140,7 +140,7 @@ class WebEndPoint(webapp.RequestHandler):
             self.redirect(redirect_url)
             logging.warn('Request preempted. Redirecting to %s' % redirect_url)
         except Exception, e:
-            if isinstance(e, HTTPError) and e.code == 404:
+            if (isinstance(e, HTTPError) and e.code == 404) or isinstance(e, KeyError):
                 self.error(404)
                 self.response.out.write(
                     PAGE_TEMPLATE % {
