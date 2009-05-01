@@ -88,9 +88,19 @@ class AdminEndPoint(webapp.RequestHandler):
                 'title': 'sbsnextbus - memcache flush', 
                 'body': 'memcache flush ' + \
                             (result and 'succeeded' or 'failed')}
-            self.response.out.write(response)
+            return self.response.out.write(response)
+        elif self.request.get('infocache'):
+            result = memcache.get_stats()
+            if result:
+                body = '<br/>'.join(('<b>%s</b>: %s\n' % t for t in result.iteritems()))
+            else:
+                body = 'failed to retrieve memcache stats'
+            response = PAGE_TEMPLATE % {
+                'title': 'sbsnextbus - memcache stats',
+                'body': body}
+            return self.response.out.write(response)
         else:
-            self.response.out.write('what function did you want?')
+            return self.response.out.write('what function did you want?')
         
 class WebEndPoint(webapp.RequestHandler):
 

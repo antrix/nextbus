@@ -8,7 +8,7 @@ SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
 SBS_SITE_PROXY = 'http://torbox.theaveragegeek.com/nextbus/proxy.php?url=mobileiris'
 LTA_SITE = 'http://www.publictransport.sg/public/ptp/en/Getting-Around/' \
             'ArrivaltimeResults.html?hidServiceNoValue='
-USE_SBS_PROXY = False
+USE_SBS_PROXY = True
 
 PAGE_TEMPLATE = """
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
@@ -90,7 +90,7 @@ def get_url(url):
                 logging.debug('Details for url fetch error: %s' % result.content)
             raise HTTPError(url, result.status_code, result.content)
         else:
-            logging.debug("URL contents: %s", result.content)
+            #logging.debug("URL contents: %s", result.content)
             return result.content
     except urlfetch.Error, e:
         logging.warn("Error fetching url %s" % url, exc_info=True)

@@ -11,6 +11,10 @@ def get_stop_details(stop):
     details = memcache.get(stop)
     if details is not None:
         logging.debug('Cache hit for stop %s' % stop)
+        # TODO - remove this! Put it here to not flush cache
+        # till I can fix the get_stop_details_sbs() method
+        if not memcache.set(stop, details, time=0): # 7 days
+            logging.error('Failed re-saving cache for stop %s' % stop)
         return details
 
     if stop in lta_stops:
@@ -128,6 +132,7 @@ def get_stop_details_lta(stop, req_service=None):
     result = get_url('%s&hidBusStopValue=%s' % (LTA_SITE, stop))
 
     soup = BeautifulSoup(result)
+    logging.debug(soup)
 
     services = []
     timings = {}
