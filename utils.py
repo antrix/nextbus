@@ -1,14 +1,25 @@
 import logging
+import random
 from datetime import timedelta, tzinfo, datetime, time
+
 from google.appengine.api import urlfetch
 
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
 #SBS_SITE_PROXY = 'http://75.101.162.82/proxy.php?url=mobileiris'
 #SBS_SITE_PROXY = 'http://antrix.net/nextbus/proxy.php?url=mobileiris'
-SBS_SITE_PROXY = 'http://torbox.theaveragegeek.com/nextbus/proxy.php?url=mobileiris'
+#SBS_SITE_PROXY = 'http://torbox.theaveragegeek.com/nextbus/proxy.php?url=mobileiris'
+SBS_SITE_PROXIES = (
+        'http://www.theaveragegeek.com/nextbus/proxy.php?url=mobileiris', 
+        'http://rcs.theaveragegeek.com/nextbus/proxy.php?url=mobileiris',
+    )
 LTA_SITE = 'http://www.publictransport.sg/public/ptp/en/Getting-Around/' \
             'ArrivaltimeResults.html?hidServiceNoValue='
+
 USE_SBS_PROXY = True
+
+def SBS_SITE_PROXY():
+    return random.choice(SBS_SITE_PROXIES)
+
 
 PAGE_TEMPLATE = """
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"

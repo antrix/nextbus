@@ -66,7 +66,7 @@ def get_stop_details_sbs(stop):
 def get_timings_sbs(stop, service):
 
     if USE_SBS_PROXY:
-        result = get_url(SBS_SITE_PROXY + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
+        result = get_url(SBS_SITE_PROXY() + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
     else:
         result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
                         % (SBS_SITE, stop, service))
@@ -80,7 +80,7 @@ def get_timings_sbs(stop, service):
         token = re.search(r'\(\w+?\)', new_url).group()
         logging.info('new token: %s' % token)
         if USE_SBS_PROXY:
-            result = get_url(SBS_SITE_PROXY + '%2F' + token + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
+            result = get_url(SBS_SITE_PROXY() + '%2F' + token + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
         else:
             result = get_url('%s/%s/index_mobresult.aspx?stop=%s&svc=%s' \
                             % (SBS_SITE, token, stop, service))
