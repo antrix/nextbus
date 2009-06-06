@@ -15,7 +15,7 @@ SBS_SITE_PROXIES = (
 LTA_SITE = 'http://www.publictransport.sg/public/ptp/en/Getting-Around/' \
             'ArrivaltimeResults.html?hidServiceNoValue='
 
-USE_SBS_PROXY = True
+USE_SBS_PROXY = False
 
 def SBS_SITE_PROXY():
     return random.choice(SBS_SITE_PROXIES)
