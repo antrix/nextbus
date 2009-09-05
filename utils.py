@@ -12,8 +12,7 @@ SBS_SITE_PROXIES = (
         'http://www.theaveragegeek.com/nextbus/proxy.php?url=mobileiris', 
         'http://rcs.theaveragegeek.com/nextbus/proxy.php?url=mobileiris',
     )
-LTA_SITE = 'http://www.publictransport.sg/public/ptp/en/Getting-Around/' \
-            'ArrivaltimeResults.html?hidServiceNoValue='
+LTA_SITE = 'http://www.publictransport.sg/publish/mobile/en/busarrivaltime.jsp'
 
 USE_SBS_PROXY = False
 

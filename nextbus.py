@@ -113,7 +113,7 @@ def get_stop_details_lta(stop, req_service=None):
 
     description = lta_stops[stop]
 
-    result = get_url('%s&hidBusStopValue=%s' % (LTA_SITE, stop))
+    result = get_url('%s?bus_stop=%s&bus_service=&submit=Submit' % (LTA_SITE, stop))
 
     soup = BeautifulSoup(result)
     logging.debug(soup)
@@ -123,19 +123,20 @@ def get_stop_details_lta(stop, req_service=None):
 
     is_wab = lambda(val): 'handicapped' in val
 
-    for link in soup.table.findAll('a'):
-        service = link.string.strip()
+    for row in soup.table.findAll('tr'):
+        cols = row.findAll('td')
+        if len(cols) != 3: continue # line breaks
+        if 'Bus' in cols[0].string: continue # Header
+        service = cols[0].string.strip()
         services.append(service)
-        tds = link.parent.findNextSiblings('td')
-        next = tds[0].findAll('td')[0].string.strip()
-        if tds[0].find('img', src=is_wab):
+        next = cols[1].contents[0].strip().replace('&nbsp;', '')
+        if cols[1].find('img', src=is_wab):
             next = next + ' (WAB)'
-        subsequent = tds[1].findAll('td')[0].string.strip()
-        if tds[1].find('img', src=is_wab):
+        subsequent = cols[2].contents[0].strip().replace('&nbsp;', '')
+        if cols[2].find('img', src=is_wab):
             subsequent = subsequent + ' (WAB)'
         timings[service] = (next, subsequent)
         # save to memcache
-        # TODO: Reset memcache time to 1 minute before upload!
         if not memcache.set('%s-%s' % (stop, service), 
                             (next, subsequent), time=60): 
             logging.error('LTA: Failed saving cache for stop,svc %s,%s' \
