@@ -116,7 +116,7 @@ def get_stop_details_lta(stop, req_service=None):
     result = get_url('%s?bus_stop=%s&bus_service=&submit=Submit' % (LTA_SITE, stop))
 
     soup = BeautifulSoup(result)
-    logging.debug(soup)
+    #logging.debug(soup)
 
     services = []
     timings = {}
