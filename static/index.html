@@ -2,9 +2,10 @@
 <html>
 <head>
     <title>Bus Arrival Info in Singapore | NextBus</title>
-    <meta name="viewport" content="width=420; initial-scale=1; user-scalable=1;"/>
+    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="initial-scale=1; user-scalable=1;"/>
     <style type="text/css">
-        body {font-size: smaller;}
+        body {font-size: small;}
     </style>
 </head>
 <body>
@@ -12,7 +13,7 @@
     <form id="theform" name="inputform" action="/stop/" method="get">
         <p>Specify bus stop number <span id="error">(5 digits)</span>:</p>
         <p id="error" style="display: none; color: red;"></p>
-        <p><input type="text" name="number" maxlength="5" pattern="\d{5}" 
+        <p><input type="text" name="number" maxlength="5" pattern="[0-9]*" 
                               title="Bus stop numbers are five digit numbers" />
         <input type="submit" value="Fetch!"/></p>
     </form>

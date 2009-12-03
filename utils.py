@@ -26,10 +26,10 @@ PAGE_TEMPLATE = """
 <html>
     <head>
         <title>%(title)s</title>
-        <meta name="viewport" 
-            content="width=420; initial-scale=1; user-scalable=1;"/>
+        <meta name="viewport" content="width=device-width" />
+        <meta name="viewport" content="initial-scale=1; user-scalable=1;"/>
         <style type="text/css">
-            body, td, th {font-size: smaller;}
+            body, td, th {font-size: small;}
         </style>
     </head>
 <body>
@@ -43,12 +43,12 @@ AJAX_PAGE_TEMPLATE = """
 <html>
     <head>
         <title>%(stop)s | NextBus</title>
-        <meta name="viewport" 
-            content="width=420; initial-scale=1; user-scalable=1;"/>
+        <meta name="viewport" content="width=device-width" />
+        <meta name="viewport" content="initial-scale=1; user-scalable=1;"/>
         <style type="text/css">
-            body, td, th {font-size: smaller;}
+            body, td, th {font-size: small;}
             table {display: none;}
-            #error {font-size: smaller; color: red; margin: 1em;}
+            #error {font-size: small; color: red; margin: 1em;}
         </style>
         <script type="text/javascript" 
             src="http://ajax.googleapis.com/ajax/libs/jquery/1.2/jquery.min.js"></script>
