@@ -27,7 +27,7 @@ PAGE_TEMPLATE = """
     <head>
         <title>%(title)s</title>
         <meta name="viewport" 
-            content="width=420; initial-scale=1; user-scalable=1;"/>
+            content="width=device-width, maximum-scale=1.0"/>
         <style type="text/css">
             body, td, th {font-size: smaller;}
         </style>
