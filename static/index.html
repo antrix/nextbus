@@ -11,8 +11,7 @@
     <p>Find out when the next bus will arrive at your bus stop.</p>
     <form id="theform" name="inputform" action="/stop/" method="get">
         <p>Specify bus stop number <span id="error">(5 digits)</span>:</p>
-        <p id="error" style="display: none; color: red;"></p>
-        <p><input type="number" name="number" maxlength="5" pattern="\d{5}" 
+        <p><input type="number" name="number" maxlength="5" pattern="[0-9]*" 
                               title="Bus stop numbers are five digit numbers" />
         <input type="submit" value="Fetch!"/></p>
     </form>

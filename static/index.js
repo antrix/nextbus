@@ -1,6 +1,7 @@
 function init() {
     function mark_error() {
         document.getElementById('error').style.color = 'red';
+        document.getElementById('error').style.fontWeight = 'bold';
     }
 
     function createCookie(name,value,days) {
