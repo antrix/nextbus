@@ -8,20 +8,40 @@ from sgbuses import all_stops
 from lta import lta_stops
 
 def get_stop_details(stop):
+    """Given a bus stop number `stop`, this method
+    returns a tuple (description, services) where
+    `description` is a string describing `stop`
+    and `services` is a list of service numbers
+    operating at the `stop`"""
 
-    details = memcache.get(stop)
-    if details is not None:
-        logging.debug('Cache hit for stop %s' % stop)
-        return details
+    this_stop = all_stops[stop]
 
+    description = this_stop['description']
+
+    logging.debug('stop %s description: %s' % (stop, description))
+
+    only_sbs_services = True
     if stop in lta_stops:
-        return get_stop_details_lta(stop)
-    else:
-        return get_stop_details_sbs(stop)
+        only_sbs_services = False
+
+    services = []
+    for service in this_stop['services']:
+        if only_sbs_services:
+            if service[1] == "SBS":
+                services.append(service[0])
+        else:
+            services.append(service[0])
+
+    logging.debug('for stop %s services are %s' % (stop, services))
+
+    return (description, services)
 
 def get_timings(stop, service):
+    """Given a pair of `stop` number & `service` number, returns
+    a tuple of string (next, subsequent) indicating the expected
+    next & subsequent arrival time of `service` at `stop`"""
 
-    if is_day_time() and service.endswith('N'):
+    if is_day_time() and (service.endswith('N') or service.startswith("NR")):
         # Don't check night owl during day
         logging.warn('day time skip for %s' % service)
         return ('not operating now', 'no current prediction')
@@ -33,35 +53,11 @@ def get_timings(stop, service):
         return cached
 
     if stop in lta_stops:
-        return get_stop_details_lta(stop, service)
+        return _get_timings_lta(stop, service)
     else:
-        return get_timings_sbs(stop, service)
+        return _get_timings_sbs(stop, service)
 
-def get_stop_details_sbs(stop):
-
-    this_stop = all_stops[stop]
-
-    description = this_stop['description']
-
-    logging.debug('stop %s description: %s' % (stop, description))
-
-    services = []
-    for service in this_stop['services']:
-        if service[1] == "SBS":
-            services.append(service[0])
-
-    logging.debug('for stop %s services are %s' % (stop, services))
-
-    # save to memcache
-    if not memcache.set(stop, 
-            (description, services), time=604800): # 7 days
-        logging.error('Failed saving cache for stop %s' % stop)
-    else:
-        logging.debug('Saved stop %s to cache' % stop)
-
-    return (description, services)
-
-def get_timings_sbs(stop, service):
+def _get_timings_sbs(stop, service):
 
     if USE_SBS_PROXY:
         result = get_url(SBS_SITE_PROXY() + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
@@ -93,73 +89,64 @@ def get_timings_sbs(stop, service):
         logging.error(result)
         raise Exception('Error fetching arrival times')
 
-    next = x.group('next')
+    arriving = x.group('next')
     subsequent = x.group('subsequent')
 
     # save to memcache
     # TODO: Reset memcache time to 1 minute before upload!
     if not memcache.set('%s-%s' % (stop, service), 
-                        (next, subsequent), time=60): 
+                        (arriving, subsequent), time=60): 
         logging.error('Failed saving cache for stop,svc %s,%s' \
                         % (stop, service))
     else:
         logging.debug('Saved cache for stop, svc %s, %s' % (stop, service))
 
-    return (next, subsequent)
+    return (arriving, subsequent)
 
-def get_stop_details_lta(stop, req_service=None):
+def _get_timings_lta(stop, service):
 
-    description = lta_stops[stop]
+    stop = stop.strip()
+    service = service.strip()
 
     result = get_url('%s?bus_stop=%s&bus_service=&submit=Submit' % (LTA_SITE, stop))
 
     soup = BeautifulSoup(result)
     #logging.debug(soup)
 
-    services = []
-    timings = {}
-
     is_wab = lambda(val): 'handicapped' in val
 
+    timings = {}
     for row in soup.table.findAll('tr'):
         cols = row.findAll('td')
         if len(cols) != 3: continue # line breaks
         if 'Bus' in cols[0].string: continue # Header
-        service = cols[0].string.strip()
-        services.append(service)
+        svc = cols[0].string.strip()
+        # To make service numbers compatible w/ SBS, we'll
+        # pad them with 0, i.e. '002' instead of '2'
+        svc = svc.zfill(3)
+
         if cols[1].contents:
             arrv = cols[1].contents[0].strip().replace('&nbsp;', '')
             if cols[1].find('img', src=is_wab):
                 arrv = arrv + ' (WAB)'
         else:
-            arrv = 'retry'
+            arrv = None
+
         if cols[2].contents:
             subsequent = cols[2].contents[0].strip().replace('&nbsp;', '')
             if cols[2].find('img', src=is_wab):
                 subsequent = subsequent + ' (WAB)'
         else:
-            subsequent = 'retry'
-        timings[service] = (arrv, subsequent)
-        # save to memcache
-        if not memcache.set('%s-%s' % (stop, service), 
-                            (arrv, subsequent), time=60): 
-            logging.error('LTA: Failed saving cache for stop,svc %s,%s' \
-                            % (stop, service))
-        else:
-            logging.debug('LTA: Saved cache for stop, svc %s, %s' % (stop, service))
+            subsequent = None
 
+        if arrv and subsequent:
+            timings[svc] = (arrv, subsequent)
+            # save to memcache
+            if not memcache.set('%s-%s' % (stop, svc), (arrv, subsequent), time=60): 
+                logging.error('LTA: Failed saving cache for stop,svc %s,%s' \
+                                % (stop, svc))
+            else:
+                logging.debug('LTA: Saved cache for stop, svc %s, %s' % (stop, svc))
 
-    logging.debug('LTA: for stop %s services are %s' % (stop, services))
-
-    # save to memcache
-    if not memcache.set(stop, 
-            (description, services), time=604800): # 7 days
-        logging.error('LTA: Failed saving cache for stop %s' % stop)
-    else:
-        logging.debug('LTA: Saved stop %s to cache' % stop)
-
-    if req_service:
-        return timings[req_service]
-    else:
-        return (description, services)
+    return timings[service]
 
