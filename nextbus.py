@@ -127,16 +127,22 @@ def get_stop_details_lta(stop, req_service=None):
         if 'Bus' in cols[0].string: continue # Header
         service = cols[0].string.strip()
         services.append(service)
-        next = cols[1].contents[0].strip().replace('&nbsp;', '')
-        if cols[1].find('img', src=is_wab):
-            next = next + ' (WAB)'
-        subsequent = cols[2].contents[0].strip().replace('&nbsp;', '')
-        if cols[2].find('img', src=is_wab):
-            subsequent = subsequent + ' (WAB)'
-        timings[service] = (next, subsequent)
+        if cols[1].contents:
+            arrv = cols[1].contents[0].strip().replace('&nbsp;', '')
+            if cols[1].find('img', src=is_wab):
+                arrv = arrv + ' (WAB)'
+        else:
+            arrv = 'retry'
+        if cols[2].contents:
+            subsequent = cols[2].contents[0].strip().replace('&nbsp;', '')
+            if cols[2].find('img', src=is_wab):
+                subsequent = subsequent + ' (WAB)'
+        else:
+            subsequent = 'retry'
+        timings[service] = (arrv, subsequent)
         # save to memcache
         if not memcache.set('%s-%s' % (stop, service), 
-                            (next, subsequent), time=60): 
+                            (arrv, subsequent), time=60): 
             logging.error('LTA: Failed saving cache for stop,svc %s,%s' \
                             % (stop, service))
         else:
