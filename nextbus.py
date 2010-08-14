@@ -1,10 +1,10 @@
 import logging
 import re
 from google.appengine.api import memcache
-from django.utils import simplejson as json
 
 from BeautifulSoup import BeautifulSoup
 from utils import *
+from sgbuses import all_stops
 from lta import lta_stops
 
 def get_stop_details(stop):
@@ -38,8 +38,6 @@ def get_timings(stop, service):
         return get_timings_sbs(stop, service)
 
 def get_stop_details_sbs(stop):
-
-    all_stops = json.load(open('sgbuses.json'))
 
     this_stop = all_stops[stop]
 
