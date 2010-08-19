@@ -28,6 +28,7 @@ from django.utils import simplejson as json
 # My imports
 from utils import *
 import nextbus
+import uaredirect
 
 def isvaliddomain():
     if 'Development' in os.environ['SERVER_SOFTWARE']:
@@ -214,8 +215,8 @@ def main():
     logging.getLogger().setLevel(logging.DEBUG)
     debug = True
 
-    application = webapp.WSGIApplication(
-          urls, debug=debug)
+    application = webapp.WSGIApplication(urls, debug=debug)
+    application = uaredirect.UserAgentRedirect(application)
     run_wsgi_app(application)
 
 if __name__ == "__main__":
