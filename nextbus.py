@@ -59,6 +59,8 @@ def get_timings(stop, service):
 
 def _get_timings_sbs(stop, service):
 
+    return ("blocked", "blocked") # Till we get un-blocked by SBS!
+
     result = get_url('%s/mobresult.aspx?__redir=1&svc=%s&stop=%s' % (SBS_SITE, service, stop), deadline=2)
 
     x = re.search(r'Service\s+?%s<br.*?Next bus:\s+(?P<next>[\w\s\(\),]+)<br>.*?Subsequent bus:' \
