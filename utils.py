@@ -5,20 +5,7 @@ from datetime import timedelta, tzinfo, datetime, time
 from google.appengine.api import urlfetch
 
 SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
-#SBS_SITE_PROXY = 'http://75.101.162.82/proxy.php?url=mobileiris'
-#SBS_SITE_PROXY = 'http://antrix.net/nextbus/proxy.php?url=mobileiris'
-#SBS_SITE_PROXY = 'http://torbox.theaveragegeek.com/nextbus/proxy.php?url=mobileiris'
-SBS_SITE_PROXIES = (
-        'http://www.theaveragegeek.com/nextbus/proxy.php?url=mobileiris', 
-        'http://rcs.theaveragegeek.com/nextbus/proxy.php?url=mobileiris',
-    )
 LTA_SITE = 'http://www.publictransport.sg/publish/mobile/en/busarrivaltime.jsp'
-
-USE_SBS_PROXY = False
-
-def SBS_SITE_PROXY():
-    return random.choice(SBS_SITE_PROXIES)
-
 
 PAGE_TEMPLATE = """
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
@@ -66,7 +53,7 @@ AJAX_PAGE_TEMPLATE = """
         </table><br/>
 </font>
     <p style="font-size: smaller;">
-        [<a id="refresh-link" href="/stop/?number=%(stop)s">Refresh</a>] [<a href="/">Home</a>]
+        [<a id="refresh-link" href="/stop/?xhr=1&number=%(stop)s">Refresh</a>] [<a href="/">Home</a>]
     </p>
 </body>
 </html>"""
@@ -89,15 +76,25 @@ def _urlfetch2(url):
             if count == (maximum-1):
                 raise
 
-def get_url(url):
+def get_url(url, payload=None, method=urlfetch.GET, deadline=None):
     try:
         logging.debug("Fetching URL: %s", url)
-        result = _urlfetch2(url) # urlfetch.fetch(url)
+
+        headers = {'User-Agent': 'Dalvik/1.2.0 (Linux; U; Android 2.2; Nexus One Build/FRF91)'}
+        if payload:
+            headers['Content-Type'] = 'application/x-www-form-urlencoded'
+            result = urlfetch.fetch(url=url, payload=payload, method=urlfetch.POST,
+                                    headers=headers, deadline=deadline)
+        else:
+            result = urlfetch.fetch(url=url, method=method, headers=headers, deadline=deadline)
+        
         logging.debug("Fetched URL: %s", url)
+
         if result.status_code != 200:
             logging.warn('Error code %s while fetching url: %s' % (result.status_code, url))
             if result.status_code != 404:
                 logging.debug('Details for url fetch error: %s' % result.content)
+            #logging.debug("URL contents: %s", result.content)
             raise HTTPError(url, result.status_code, result.content)
         else:
             #logging.debug("URL contents: %s", result.content)

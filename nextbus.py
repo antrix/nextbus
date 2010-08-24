@@ -59,26 +59,7 @@ def get_timings(stop, service):
 
 def _get_timings_sbs(stop, service):
 
-    if USE_SBS_PROXY:
-        result = get_url(SBS_SITE_PROXY() + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
-    else:
-        result = get_url('%s/index_mobresult.aspx?stop=%s&svc=%s' \
-                        % (SBS_SITE, stop, service))
-
-    #logging.info(result)
-    # Check if we are redirected
-    if re.search(r'Object moved to', result, re.DOTALL):
-        soup = BeautifulSoup(result)
-        new_url = soup('a')[0]['href']
-        logging.debug('new url: %s' % new_url)
-        token = re.search(r'\(\w+?\)', new_url).group()
-        logging.info('new token: %s' % token)
-        if USE_SBS_PROXY:
-            result = get_url(SBS_SITE_PROXY() + '%2F' + token + '%2Findex_mobresult.aspx%3Fstop%3D' + stop + '%26svc%3D'+ service)
-        else:
-            result = get_url('%s/%s/index_mobresult.aspx?stop=%s&svc=%s' \
-                            % (SBS_SITE, token, stop, service))
-        #logging.info(result)
+    result = get_url('%s/mobresult.aspx?__redir=1&svc=%s&stop=%s' % (SBS_SITE, service, stop), deadline=2)
 
     x = re.search(r'Service\s+?%s<br.*?Next bus:\s+(?P<next>[\w\s\(\),]+)<br>.*?Subsequent bus:' \
                 '\s+(?P<subsequent>[\w\s\(\),]+)<br>' % service.lstrip('0'), result, re.DOTALL)
