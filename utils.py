@@ -4,7 +4,7 @@ from datetime import timedelta, tzinfo, datetime, time
 
 from google.appengine.api import urlfetch
 
-SBS_SITE = 'http://www.sbstransit.com.sg/mobileiris'
+SBS_SITE = 'http://www.sbstransit.com.sg/iris_map'
 LTA_SITE = 'http://www.publictransport.sg/publish/mobile/en/busarrivaltime.jsp'
 
 PAGE_TEMPLATE = """

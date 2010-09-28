@@ -57,14 +57,15 @@ def get_timings(stop, service):
     else:
         return _get_timings_sbs(stop, service)
 
+sbs_regex = re.compile(r"next bus:</td><td>(?P<next>.*?)</td>.*subsequent bus:</td><td>(?P<subsequent>.*?)</td>", re.IGNORECASE|re.DOTALL)
+
 def _get_timings_sbs(stop, service):
 
-    return ("blocked", "blocked") # Till we get un-blocked by SBS!
+    # return ("blocked", "blocked") # Till we get un-blocked by SBS!
 
-    result = get_url('%s/mobresult.aspx?__redir=1&svc=%s&stop=%s' % (SBS_SITE, service, stop), deadline=2)
+    result = get_url("%s/busstop.aspx?svc=%s&stop=%s" % (SBS_SITE, service, stop), deadline=3)
 
-    x = re.search(r'Service\s+?%s<br.*?Next bus:\s+(?P<next>[\w\s\(\),]+)<br>.*?Subsequent bus:' \
-                '\s+(?P<subsequent>[\w\s\(\),]+)<br>' % service.lstrip('0'), result, re.DOTALL)
+    x = sbs_regex.search(result)
 
     if not x:
         logging.error('parsing result page failed for service %s at stop %s' % (
@@ -76,7 +77,6 @@ def _get_timings_sbs(stop, service):
     subsequent = x.group('subsequent')
 
     # save to memcache
-    # TODO: Reset memcache time to 1 minute before upload!
     if not memcache.set('%s-%s' % (stop, service), 
                         (arriving, subsequent), time=60): 
         logging.error('Failed saving cache for stop,svc %s,%s' \
