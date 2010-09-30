@@ -57,7 +57,7 @@ def get_timings(stop, service):
     else:
         return _get_timings_sbs(stop, service)
 
-sbs_regex = re.compile(r"next bus:</td><td>(?P<next>.*?)</td>.*subsequent bus:</td><td>(?P<subsequent>.*?)</td>", re.IGNORECASE|re.DOTALL)
+sbs_regex = re.compile(r"next bus:</td><td>(?P<next>.*?)</td>.*?subsequent bus:</td><td>(?P<subsequent>.*?)</td>", re.IGNORECASE|re.DOTALL)
 
 def _get_timings_sbs(stop, service):
 
@@ -73,8 +73,8 @@ def _get_timings_sbs(stop, service):
         logging.error(result)
         raise Exception('Error fetching arrival times')
 
-    arriving = x.group('next')
-    subsequent = x.group('subsequent')
+    arriving = x.group('next').strip()
+    subsequent = x.group('subsequent').strip()
 
     # save to memcache
     if not memcache.set('%s-%s' % (stop, service), 
