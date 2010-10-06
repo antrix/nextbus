@@ -57,7 +57,7 @@ def get_timings(stop, service):
     else:
         return _get_timings_sbs(stop, service)
 
-sbs_regex = re.compile(r"next bus:</td><td>(?P<next>.*?)</td>.*?subsequent bus:</td><td>(?P<subsequent>.*?)</td>", re.IGNORECASE|re.DOTALL)
+sbs_regex = re.compile(r"<td>Svc:</td><td>(?P<svc>.*?)</td></tr><tr><td>next bus:</td><td>(?P<next>.*?)</td>.*?subsequent bus:</td><td>(?P<subsequent>.*?)</td>", re.IGNORECASE|re.DOTALL)
 
 def _get_timings_sbs(stop, service):
 
@@ -65,7 +65,7 @@ def _get_timings_sbs(stop, service):
 
     result = get_url("%s/busstop.aspx?svc=%s&stop=%s" % (SBS_SITE, service, stop), deadline=3)
 
-    x = sbs_regex.search(result)
+    x = sbs_regex.finditer(result)
 
     if not x:
         logging.error('parsing result page failed for service %s at stop %s' % (
@@ -73,18 +73,31 @@ def _get_timings_sbs(stop, service):
         logging.error(result)
         raise Exception('Error fetching arrival times')
 
-    arriving = x.group('next').strip()
-    subsequent = x.group('subsequent').strip()
+    arrv, subs = 'retry', 'retry'
 
-    # save to memcache
-    if not memcache.set('%s-%s' % (stop, service), 
-                        (arriving, subsequent), time=60): 
-        logging.error('Failed saving cache for stop,svc %s,%s' \
-                        % (stop, service))
-    else:
-        logging.debug('Saved cache for stop, svc %s, %s' % (stop, service))
+    for p in x:
+        svc = p.group('svc').strip()
+        arriving = p.group('next').strip()
+        subsequent = p.group('subsequent').strip()
 
-    return (arriving, subsequent)
+        # To make service numbers compatible w/ SBS, we'll
+        # pad them with 0, i.e. '002' instead of '2'
+        svc = svc.zfill(3)
+
+        logging.debug("svc, arriving, subsequent: %s %s %s" % (svc, arriving, subsequent))
+
+        if svc == service:
+            arrv, subs = arriving, subsequent
+
+        # save to memcache
+        if not memcache.set('%s-%s' % (stop, svc), 
+                            (arriving, subsequent), time=60): 
+            logging.error('Failed saving cache for stop,svc %s,%s' \
+                            % (stop, svc))
+        else:
+            logging.debug('Saved cache for stop, svc %s, %s' % (stop, svc))
+
+    return (arrv, subs)
 
 def _get_timings_lta(stop, service):
 
