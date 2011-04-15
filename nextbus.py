@@ -55,7 +55,8 @@ def get_timings(stop, service):
     if stop in lta_stops:
         return _get_timings_lta(stop, service)
     else:
-        return _get_timings_sbs(stop, service)
+        return ("blocked", "blocked")
+        #return _get_timings_sbs(stop, service)
 
 sbs_regex = re.compile(r"<td>Svc:</td><td>(?P<svc>.*?)</td></tr><tr><td>next bus:</td><td>(?P<next>.*?)</td>.*?subsequent bus:</td><td>(?P<subsequent>.*?)</td>", re.IGNORECASE|re.DOTALL)
 
