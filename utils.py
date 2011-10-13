@@ -21,6 +21,9 @@ PAGE_TEMPLATE = """
     </head>
 <body>
 %(body)s
+    <p style="font-size: smaller; color: #8B7D6B;">
+        <strong>NOTE:</strong>: I'll be shutting down this site for good on <strong>1<sup>st</sup> November</strong>. So long, and thanks for all the fish!
+    </p>
 </body>
 </html>"""
 
@@ -54,6 +57,9 @@ AJAX_PAGE_TEMPLATE = """
 </font>
     <p style="font-size: smaller;">
         [<a id="refresh-link" href="/stop/?xhr=1&number=%(stop)s">Refresh</a>] [<a href="/">Home</a>]
+    </p>
+    <p style="font-size: smaller; color: #8B7D6B;">
+        <strong>NOTE:</strong>: I'll be shutting down this site for good on <strong>1<sup>st</sup> November</strong>. So long, and thanks for all the fish!
     </p>
 </body>
 </html>"""
