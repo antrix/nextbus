@@ -1,8 +1,7 @@
 application: sbsnextbus
 version: the-end
-runtime: python27
+runtime: python
 api_version: 1
-threadsafe: true
 
 handlers:
 - url: /favicon.ico
@@ -21,4 +20,4 @@ handlers:
   static_dir: static
 
 - url: /.*
-  script: main.application
+  script: main.py

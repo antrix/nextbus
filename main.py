@@ -1,3 +1,4 @@
+from google.appengine.ext.webapp.util import run_wsgi_app
 
 page_body = """<!DOCTYPE html> 
         <head>
@@ -45,4 +46,9 @@ class EverythingGone(object):
 
         return [page_body]
 
-application = EverythingGone()
+def main():
+    application = EverythingGone()
+    run_wsgi_app(application)
+
+if __name__ == "__main__":
+    main()
