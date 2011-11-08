@@ -1,3 +1,4 @@
+import random
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 page_body = """<!DOCTYPE html> 
@@ -30,7 +31,8 @@ page_body = """<!DOCTYPE html>
         </ul>
         """
 
-page_body_android = page_body + """<p>Or take a cab instead: try <a href="https://market.android.com/details?id=net.antrix.android.cabbiepro" onClick="recordOutboundLink(this, 'Outbound Links', 'cabbie-pro');return false;">Cabbie Pro for Android</a>."""
+page_body_android_options = ("""<p>Or take a cab instead: try <a href="http://market.android.com/details?id=net.antrix.android.cabbiepro" onClick="recordOutboundLink(this, 'Outbound Links', 'cabbie-pro');return false;">Cabbie Pro for Android</a>.""",
+"""<p>Or take a cab instead: try my app <a href="http://market.android.com/details?id=net.antrix.android.cabbiepro" onClick="recordOutboundLink(this, 'Outbound Links', 'my-cabbie-pro');return false;">Cabbie Pro for Android</a>.""")
 
 class EverythingGone(object):
     """Declare everything gone"""
@@ -42,7 +44,7 @@ class EverythingGone(object):
         user_agent = environ.get('HTTP_USER_AGENT', None)
 
         if user_agent and 'Android' in user_agent:
-            return [page_body_android]
+            return [page_body + random.choice(page_body_android_options)]
 
         return [page_body]
 
