@@ -41,12 +41,13 @@ class EverythingGone(object):
 
         start_response("410 Gone", [('Content-Type', 'text/html')])
 
-        user_agent = environ.get('HTTP_USER_AGENT', None)
+        #user_agent = environ.get('HTTP_USER_AGENT', None)
 
-        if user_agent and 'Android' in user_agent:
-            return [page_body + random.choice(page_body_android_options)]
+        #if user_agent and 'Android' in user_agent:
+        #    return [page_body + random.choice(page_body_android_options)]
 
-        return [page_body]
+        return [page_body + random.choice(page_body_android_options)]
+        #return [page_body]
 
 def main():
     application = EverythingGone()
